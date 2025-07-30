@@ -21,6 +21,7 @@ export default function PodLogs() {
   const [logs, setLogs] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLive, setIsLive] = useState(false);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [tailLines, setTailLines] = useState('50');
   const [loading, setLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -136,7 +137,10 @@ export default function PodLogs() {
   const loadLogs = async () => {
     if (!selectedNamespace || (!selectedPod && !appLabel)) return;
 
-    setLoading(true);
+    if (!isLive) {
+      setIsLoadingLogs(true);
+    }
+    
     try {
       const data = await fetchLogs({
         namespace: selectedNamespace,
@@ -147,9 +151,11 @@ export default function PodLogs() {
       setLogs(data.logs);
     } catch (error) {
       console.error('Failed to load logs:', error);
-      setLogs('Error: Failed to fetch logs');
+      if (!isLive) {
+        setLogs('Error: Failed to fetch logs');
+      }
     } finally {
-      setLoading(false);
+      setIsLoadingLogs(false);
     }
   };
 
@@ -550,12 +556,19 @@ export default function PodLogs() {
             />
           </div>
 
-          {loading && (
+          {isLoadingLogs && !isLive && (
             <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 rounded-lg flex items-center justify-center">
               <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
                 <span>Loading logs...</span>
               </div>
+            </div>
+          )}
+          
+          {isLive && (
+            <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm flex items-center space-x-2">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <span>Live</span>
             </div>
           )}
         </div>
