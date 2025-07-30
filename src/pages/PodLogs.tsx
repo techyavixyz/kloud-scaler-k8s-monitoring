@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Download, Play, Pause, Maximize2, Filter, RefreshCw, Package, X, List } from 'lucide-react';
 import { fetchLogs, fetchPods, fetchNamespaces } from '../services/api';
+import AutocompleteInput from '../components/AutocompleteInput';
 
 interface Pod {
   name: string;
@@ -32,6 +33,8 @@ export default function PodLogs() {
   const [podSearchTerm, setPodSearchTerm] = useState('');
   const [showPodsList, setShowPodsList] = useState(false);
   const [loadingPods, setLoadingPods] = useState(false);
+  const [podOptions, setPodOptions] = useState<string[]>([]);
+  const [loadingPodOptions, setLoadingPodOptions] = useState(false);
   
   const logsRef = useRef<HTMLPreElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -43,6 +46,7 @@ export default function PodLogs() {
   useEffect(() => {
     if (selectedNamespace) {
       loadPods();
+      loadPodOptions();
     }
   }, [selectedNamespace]);
 
@@ -101,6 +105,21 @@ export default function PodLogs() {
     }
   };
 
+  const loadPodOptions = async () => {
+    if (!selectedNamespace) return;
+    
+    setLoadingPodOptions(true);
+    try {
+      const data = await fetchPods(selectedNamespace);
+      const podNames = data.pods.map((pod: Pod) => pod.name);
+      setPodOptions(podNames);
+    } catch (error) {
+      console.error('Failed to load pod options:', error);
+      setPodOptions([]);
+    } finally {
+      setLoadingPodOptions(false);
+    }
+  };
   const loadPodsList = async () => {
     if (!selectedNamespace) {
       alert('Please select a namespace first.');
@@ -267,18 +286,14 @@ export default function PodLogs() {
             <label className="text-white block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Pod Name
             </label>
-            <select
+            <AutocompleteInput
               value={selectedPod}
-              onChange={(e) => setSelectedPod(e.target.value)}
-              className="text-white w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select pod</option>
-              {pods.map(pod => (
-                <option key={pod.name} value={pod.name}>
-                  {pod.name} ({pod.status})
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedPod}
+              options={podOptions}
+              placeholder="Type or select pod name..."
+              loading={loadingPodOptions}
+              className="text-white"
+            />
           </div>
 
           <div>

@@ -26,6 +26,8 @@ const logRoutes = require('./routes/logs');
 const nodeRoutes = require('./routes/nodes');
 const namespaceRoutes = require('./routes/namespaces');
 const contextRoutes = require('./routes/contexts');
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
 
 // Route usage
 app.use('/api', resourceRoutes);
@@ -34,6 +36,8 @@ app.use('/api', logRoutes);
 app.use('/api', nodeRoutes);
 app.use('/api', namespaceRoutes);
 app.use('/api', contextRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

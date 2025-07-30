@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Activity, FileText, Settings, GitBranch, X, ShieldIcon as Kubernetes, AlertTriangle, Server, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Activity, FileText, Settings, GitBranch, X, ShieldIcon as Kubernetes, AlertTriangle, Server, BarChart3, User, Users } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../utils/cn';
 
 interface SidebarProps {
@@ -8,19 +9,26 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Resource Usage', href: '/resources', icon: Activity },
-  { name: 'Pod Logs', href: '/logs', icon: FileText },
-  { name: 'Pod Errors', href: '/pod-errors', icon: AlertTriangle },
-  { name: 'Node Status', href: '/node-status', icon: Server },
-  { name: 'Pod Status', href: '/pod-status', icon: BarChart3 },
-  { name: 'Contexts', href: '/contexts', icon: GitBranch },
-  { name: 'Settings', href: '/settings', icon: Settings },
-];
-
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
+  const { hasRole } = useAuth();
+
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'viewer'] },
+    { name: 'Resource Usage', href: '/resources', icon: Activity, roles: ['admin', 'viewer'] },
+    { name: 'Pod Logs', href: '/logs', icon: FileText, roles: ['admin', 'viewer'] },
+    { name: 'Pod Errors', href: '/pod-errors', icon: AlertTriangle, roles: ['admin', 'viewer'] },
+    { name: 'Node Status', href: '/node-status', icon: Server, roles: ['admin', 'viewer'] },
+    { name: 'Pod Status', href: '/pod-status', icon: BarChart3, roles: ['admin', 'viewer'] },
+    { name: 'Contexts', href: '/contexts', icon: GitBranch, roles: ['admin', 'viewer'] },
+    { name: 'Profile', href: '/profile', icon: User, roles: ['admin', 'viewer'] },
+    { name: 'Admin', href: '/admin', icon: Users, roles: ['admin'] },
+    { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin', 'viewer'] },
+  ];
+
+  const filteredNavigation = navigation.filter(item => 
+    item.roles.some(role => hasRole(role))
+  );
 
   return (
     <>
@@ -66,7 +74,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         <nav className="flex-1 px-2 pb-4 w-50">
           <ul className="space-y-2">
-            {navigation.map((item) => {
+            {filteredNavigation.map((item) => {
               const isActive = location.pathname === item.href;
               
               return (
