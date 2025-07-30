@@ -15,14 +15,12 @@ app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
-}));
-app.use(morgan('combined'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const WebSocket = require('ws');
+const http = require('http');
 // Import routes
 const resourceRoutes = require('./routes/resources');
 const podRoutes = require('./routes/pods');
@@ -31,7 +29,7 @@ const nodeRoutes = require('./routes/nodes');
 const namespaceRoutes = require('./routes/namespaces');
 const contextRoutes = require('./routes/contexts');
 
-// Use routes
+require('dotenv').config();
 app.use('/api', resourceRoutes);
 app.use('/api', podRoutes);
 app.use('/api', logRoutes);
