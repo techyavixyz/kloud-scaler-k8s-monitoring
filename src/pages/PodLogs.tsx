@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Download, Play, Pause, Maximize2, Filter, RefreshCw } from 'lucide-react';
+import { Search, Download, Play, Pause, Maximize2, Filter, RefreshCw, Package, X, List } from 'lucide-react';
 import { fetchLogs, fetchPods, fetchNamespaces } from '../services/api';
 
 interface Pod {
@@ -25,6 +25,12 @@ export default function PodLogs() {
   const [loading, setLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
+  
+  const [podsList, setPodsList] = useState<Pod[]>([]);
+  const [filteredPods, setFilteredPods] = useState<Pod[]>([]);
+  const [podSearchTerm, setPodSearchTerm] = useState('');
+  const [showPodsList, setShowPodsList] = useState(false);
+  const [loadingPods, setLoadingPods] = useState(false);
   
   const logsRef = useRef<HTMLPreElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -55,6 +61,20 @@ export default function PodLogs() {
     }
   }, [logs, autoScroll]);
 
+  useEffect(() => {
+    if (podSearchTerm) {
+      const filtered = podsList.filter(pod => 
+        pod.name.toLowerCase().includes(podSearchTerm.toLowerCase()) ||
+        Object.values(pod.labels).some(label => 
+          label.toLowerCase().includes(podSearchTerm.toLowerCase())
+        )
+      );
+      setFilteredPods(filtered);
+    } else {
+      setFilteredPods(podsList);
+    }
+  }, [podSearchTerm, podsList]);
+
   const loadNamespaces = async () => {
     try {
       const data = await fetchNamespaces();
@@ -78,6 +98,39 @@ export default function PodLogs() {
       console.error('Failed to load pods:', error);
       setPods([]);
     }
+  };
+
+  const loadPodsList = async () => {
+    if (!selectedNamespace) {
+      alert('Please select a namespace first.');
+      return;
+    }
+
+    setLoadingPods(true);
+    try {
+      const data = await fetchPods(selectedNamespace);
+      setPodsList(data.pods);
+      setFilteredPods(data.pods);
+      setShowPodsList(true);
+    } catch (error) {
+      console.error('Failed to load pods list:', error);
+      setPodsList([]);
+      setFilteredPods([]);
+    } finally {
+      setLoadingPods(false);
+    }
+  };
+
+  const clearPodsList = () => {
+    setPodsList([]);
+    setFilteredPods([]);
+    setPodSearchTerm('');
+    setShowPodsList(false);
+  };
+
+  const selectPodFromList = (podName: string) => {
+    setSelectedPod(podName);
+    setAppLabel(''); // Clear app label when selecting specific pod
   };
 
   const loadLogs = async () => {
@@ -303,6 +356,166 @@ export default function PodLogs() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Pod Listing Section */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
+            <Package className="w-5 h-5" />
+            <span>Pod Management</span>
+          </h2>
+          
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={loadPodsList}
+              disabled={loadingPods || !selectedNamespace}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg transition-colors"
+            >
+              <List className={`w-4 h-4 ${loadingPods ? 'animate-spin' : ''}`} />
+              <span>{loadingPods ? 'Loading...' : 'List Pods'}</span>
+            </button>
+
+            {showPodsList && (
+              <button
+                onClick={clearPodsList}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
+                <span>Clear List</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {showPodsList && (
+          <div className="space-y-4">
+            {/* Search Box */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={podSearchTerm}
+                onChange={(e) => setPodSearchTerm(e.target.value)}
+                placeholder="🔍 Filter pods by name or labels..."
+                className="pl-10 pr-4 py-2 w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Pods List */}
+            <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-track-slate-700 scrollbar-thumb-slate-500">
+              {filteredPods.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {filteredPods.map((pod) => (
+                    <div
+                      key={pod.name}
+                      onClick={() => selectPodFromList(pod.name)}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
+                        selectedPod === pod.name
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
+                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <Package className="w-4 h-4 text-blue-500" />
+                          <span className="font-medium text-slate-900 dark:text-white text-sm truncate">
+                            {pod.name}
+                          </span>
+                        </div>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          pod.status === 'Running' 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                            : pod.status === 'Pending'
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                        }`}>
+                          {pod.status}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
+                        <div className="flex items-center justify-between">
+                          <span>Ready:</span>
+                          <span className={pod.ready ? 'text-green-600' : 'text-red-600'}>
+                            {pod.ready ? 'Yes' : 'No'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Restarts:</span>
+                          <span>{pod.restarts}</span>
+                        </div>
+                        {Object.keys(pod.labels).length > 0 && (
+                          <div className="mt-2">
+                            <div className="flex flex-wrap gap-1">
+                              {Object.entries(pod.labels).slice(0, 2).map(([key, value]) => (
+                                <span key={key} className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs">
+                                  {key}={value}
+                                </span>
+                              ))}
+                              {Object.keys(pod.labels).length > 2 && (
+                                <span className="text-slate-500 text-xs">
+                                  +{Object.keys(pod.labels).length - 2} more
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Package className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {podSearchTerm ? 'No pods match your search criteria.' : 'No pods found in this namespace.'}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Summary */}
+            {filteredPods.length > 0 && (
+              <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Showing {filteredPods.length} of {podsList.length} pods
+                </span>
+                <div className="flex items-center space-x-4 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>Running: {filteredPods.filter(p => p.status === 'Running').length}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span>Pending: {filteredPods.filter(p => p.status === 'Pending').length}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span>Failed: {filteredPods.filter(p => p.status === 'Failed').length}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!showPodsList && (
+          <div className="text-center py-8">
+            <Package className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+              Pod Management
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-4">
+              Select a namespace and click "List Pods" to view and manage pods in your cluster.
+            </p>
+            <div className="text-sm text-slate-600 dark:text-slate-400">
+              <p>• Click on any pod to select it for log viewing</p>
+              <p>• Use the search box to filter pods by name or labels</p>
+              <p>• View pod status, readiness, and restart counts</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Logs Display */}
