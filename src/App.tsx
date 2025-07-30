@@ -5,6 +5,9 @@ import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import ResourceUsage from './pages/ResourceUsage';
 import PodLogs from './pages/PodLogs';
+import PodErrors from './pages/PodErrors';
+import NodeStatus from './pages/NodeStatus';
+import PodStatus from './pages/PodStatus';
 import Contexts from './pages/Contexts';
 import Settings from './pages/Settings';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -30,6 +33,9 @@ function App() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/resources" element={<ResourceUsage />} />
                   <Route path="/logs" element={<PodLogs />} />
+                  <Route path="/pod-errors" element={<PodErrors />} />
+                  <Route path="/node-status" element={<NodeStatus />} />
+                  <Route path="/pod-status" element={<PodStatus />} />
                   <Route path="/contexts" element={<Contexts />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>

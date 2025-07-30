@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Activity, FileText, Settings, GitBranch, X, ShieldIcon as Kubernetes } from 'lucide-react';
+import { LayoutDashboard, Activity, FileText, Settings, GitBranch, X, ShieldIcon as Kubernetes, AlertTriangle, Server, BarChart3 } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 interface SidebarProps {
@@ -12,6 +12,9 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Resource Usage', href: '/resources', icon: Activity },
   { name: 'Pod Logs', href: '/logs', icon: FileText },
+  { name: 'Pod Errors', href: '/pod-errors', icon: AlertTriangle },
+  { name: 'Node Status', href: '/node-status', icon: Server },
+  { name: 'Pod Status', href: '/pod-status', icon: BarChart3 },
   { name: 'Contexts', href: '/contexts', icon: GitBranch },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
