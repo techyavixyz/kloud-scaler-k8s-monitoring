@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-monitoring
+  namespace: monitoring
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: k8s-monitoring
+  template:
+    metadata:
+      labels:
+        app: k8s-monitoring
+    spec:
+      serviceAccountName: k8s-monitoring
+      containers:
+      - name: k8s-monitoring
+        image: your-registry/k8s-monitoring:latest
+        ports:
+        - containerPort: 3001
+        env:
+        - name: DB_HOST
+          value: "postgres-service"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        volumeMounts:
+        - name: kubeconfig
+          mountPath: /root/.kube
+          readOnly: true
+      volumes:
+      - name: kubeconfig
+        secret:
+          secretName: kubeconfig-secret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-monitoring-service
+  namespace: monitoring
+spec:
+  selector:
+    app: k8s-monitoring
+  ports:
+  - port: 80
+    targetPort: 3001
+  type: LoadBalancer
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8s-monitoring
+  namespace: monitoring
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: k8s-monitoring
+rules:
+- apiGroups: [""]
+  resources: ["pods", "namespaces"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["pods", "nodes"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: k8s-monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: k8s-monitoring
+subjects:
+- kind: ServiceAccount
+  name: k8s-monitoring
+  namespace: monitoring

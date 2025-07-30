@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: k8s_monitoring
+      POSTGRES_USER: k8s_admin
+      POSTGRES_PASSWORD: secure_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  k8s-monitoring:
+    build: .
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: k8s_monitoring
+      DB_USER: k8s_admin
+      DB_PASSWORD: secure_password
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    volumes:
+      - ~/.kube:/root/.kube:ro  # Mount kubeconfig
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl  # SSL certificates
+    depends_on:
+      - k8s-monitoring
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
