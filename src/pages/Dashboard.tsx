@@ -61,7 +61,7 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Kubernetes Dashboard
+            Kloud-Scaler Kubernetes Monitoring Dashboard
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
             Monitor your cluster resources and performance in real-time
