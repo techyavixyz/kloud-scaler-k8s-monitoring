@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Download, Play, Pause, Maximize2, Filter, RefreshCw, Package, X, List } from 'lucide-react';
 import { fetchLogs, fetchPods, fetchNamespaces } from '../services/api';
 import AutocompleteInput from '../components/AutocompleteInput';
+import AnsiToHtml from 'ansi-to-html';
 
 interface Pod {
   name: string;
@@ -167,7 +168,10 @@ export default function PodLogs() {
         appLabel: appLabel,
         tail: parseInt(tailLines)
       });
-      setLogs(data.logs);
+
+      const ansiToHtml = new AnsiToHtml();
+      const formattedLogs = ansiToHtml.toHtml(data.logs);
+      setLogs(formattedLogs);
     } catch (error) {
       console.error('Failed to load logs:', error);
       if (!isLive) {
@@ -218,6 +222,7 @@ export default function PodLogs() {
         line.toLowerCase().includes(searchTerm.toLowerCase())
       ).join('\n')
     : logs;
+  
 
   const highlightedLogs = searchTerm && filteredLogs
     ? filteredLogs.replace(
