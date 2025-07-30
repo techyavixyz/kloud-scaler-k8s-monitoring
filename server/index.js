@@ -15,12 +15,10 @@ app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const WebSocket = require('ws');
-const http = require('http');
+app.use(cors());
+app.use(morgan('combined'));
+app.use(express.json());
+
 // Import routes
 const resourceRoutes = require('./routes/resources');
 const podRoutes = require('./routes/pods');
@@ -29,7 +27,7 @@ const nodeRoutes = require('./routes/nodes');
 const namespaceRoutes = require('./routes/namespaces');
 const contextRoutes = require('./routes/contexts');
 
-require('dotenv').config();
+// Route usage
 app.use('/api', resourceRoutes);
 app.use('/api', podRoutes);
 app.use('/api', logRoutes);
@@ -39,8 +37,8 @@ app.use('/api', contextRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
@@ -49,15 +47,15 @@ app.get('/health', (req, res) => {
 // WebSocket connection handling
 wss.on('connection', (ws) => {
   console.log('🔌 New WebSocket connection established');
-  
+
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
       console.log('📨 Received message:', data);
-      
+
       // Echo back for now - can be extended for real-time updates
-      ws.send(JSON.stringify({ 
-        type: 'response', 
+      ws.send(JSON.stringify({
+        type: 'response',
         data: 'Message received',
         timestamp: new Date().toISOString()
       }));
@@ -75,8 +73,8 @@ wss.on('connection', (ws) => {
   });
 
   // Send welcome message
-  ws.send(JSON.stringify({ 
-    type: 'welcome', 
+  ws.send(JSON.stringify({
+    type: 'welcome',
     message: 'Connected to Kloud-scaler K8s Monitoring',
     timestamp: new Date().toISOString()
   }));
@@ -85,7 +83,7 @@ wss.on('connection', (ws) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('❌ Server error:', err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     error: 'Something went wrong!',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
@@ -93,14 +91,14 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use('*', (req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     error: 'Route not found',
     path: req.originalUrl
   });
 });
 
+// Start the server
 const PORT = process.env.PORT || 3001;
-
 server.listen(PORT, () => {
   console.log(`🚀 Kloud-scaler K8s Monitoring Server running on port ${PORT}`);
   console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);

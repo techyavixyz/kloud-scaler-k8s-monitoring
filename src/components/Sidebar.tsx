@@ -15,9 +15,6 @@ const navigation = [
   { name: 'Pod Errors', href: '/pod-errors', icon: AlertTriangle },
   { name: 'Node Status', href: '/node-status', icon: Server },
   { name: 'Pod Status', href: '/pod-status', icon: BarChart3 },
-  { name: 'Pod Errors', href: '/pod-errors', icon: AlertTriangle },
-  { name: 'Node Status', href: '/node-status', icon: Server },
-  { name: 'Pod Status', href: '/pod-status', icon: BarChart3 },
   { name: 'Contexts', href: '/contexts', icon: GitBranch },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
