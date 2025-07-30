@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Activity, FileText, Settings, GitBranch, X, EthernetPort as Kubernetes } from 'lucide-react';
+import { LayoutDashboard, Activity, FileText, Settings, GitBranch, X, ShieldIcon as Kubernetes } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 interface SidebarProps {
@@ -61,7 +61,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="flex-1 px-4 pb-4">
+        <nav className="flex-1 px-2 pb-4 w-50">
           <ul className="space-y-2">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href;
@@ -71,7 +71,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <Link
                     to={item.href}
                     className={cn(
-                      "flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 group relative",
+                      "w-15 h-15 flex justify-center items-center space-x-3 px-6 py-3 rounded-xl transition-all duration-200 group relative",
                       isActive
                         ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
                         : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -80,12 +80,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   >
                     <item.icon className={cn(
                       "w-5 h-5 transition-transform duration-200 flex-shrink-0",
-                      "group-hover:scale-110"
+                      "group-hover:scale-110 "
                     )} />
                     
                     <span className={cn(
                       "font-medium transition-opacity duration-300 truncate",
-                      isOpen ? "opacity-100" : "opacity-0 lg:opacity-0"
+                      isOpen ? "opacity-100 flex" : "opacity-0 lg:opacity-0 hidden"
                     )}>
                       {item.name}
                     </span>
