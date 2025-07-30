@@ -239,7 +239,7 @@ export default function PodLogs() {
             className="flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
+            <span>Fetch Logs</span>
           </button>
         </div>
       </div>
@@ -254,7 +254,7 @@ export default function PodLogs() {
             <select
               value={selectedNamespace}
               onChange={(e) => setSelectedNamespace(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="text-white w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select namespace</option>
               {namespaces.map(ns => (
@@ -264,13 +264,13 @@ export default function PodLogs() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="text-white block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Pod Name
             </label>
             <select
               value={selectedPod}
               onChange={(e) => setSelectedPod(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="text-white w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select pod</option>
               {pods.map(pod => (
@@ -282,7 +282,7 @@ export default function PodLogs() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="text-white block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               App Label (Alternative)
             </label>
             <input
@@ -290,7 +290,7 @@ export default function PodLogs() {
               value={appLabel}
               onChange={(e) => setAppLabel(e.target.value)}
               placeholder="e.g., frontend, backend"
-              className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="text-white w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -301,7 +301,7 @@ export default function PodLogs() {
             <select
               value={tailLines}
               onChange={(e) => setTailLines(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="text-white w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="50">50 lines</option>
               <option value="100">100 lines</option>
@@ -320,7 +320,7 @@ export default function PodLogs() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search in logs..."
-                className="pl-10 pr-4 py-2 w-64 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="text-white pl-10 pr-4 py-2 w-64 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 

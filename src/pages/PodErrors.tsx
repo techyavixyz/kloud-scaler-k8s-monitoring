@@ -117,11 +117,11 @@ export default function PodErrors() {
             <select
               value={selectedNamespace}
               onChange={(e) => setSelectedNamespace(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="text-white w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
             >
-              <option value="">All Namespaces</option>
+              <option className= "text-white" value="">All Namespaces</option>
               {namespaces.slice(1).map(ns => (
-                <option key={ns} value={ns}>{ns}</option>
+                <option className= "text-white" key={ns} value={ns}>{ns}</option>
               ))}
             </select>
           </div>
@@ -137,7 +137,7 @@ export default function PodErrors() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by pod name, namespace, or status..."
-                className="pl-10 pr-4 py-2 w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="text-white pl-10 pr-4 py-2 w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
               />
             </div>
           </div>
@@ -253,8 +253,8 @@ export default function PodErrors() {
                 <div>
                   <h3 className="font-medium text-slate-900 dark:text-white mb-2">Basic Information</h3>
                   <div className="space-y-2 text-sm">
-                    <div><span className="font-medium">Namespace:</span> {selectedPod.namespace}</div>
-                    <div><span className="font-medium">Status:</span> 
+                    <div><span className="font-medium text-white">Namespace:</span> <span className="text-white ml-1">{selectedPod.namespace}</span></div>
+                    <div><span className="font-medium text-white">Status:</span> 
                       <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedPod.status)}`}>
                         {selectedPod.status}
                       </span>

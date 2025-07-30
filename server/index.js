@@ -46,7 +46,7 @@ app.get('/health', (req, res) => {
 
 // WebSocket connection handling
 wss.on('connection', (ws) => {
-  console.log('🔌 New WebSocket connection established');
+  console.log(' New WebSocket connection established');
 
   ws.on('message', (message) => {
     try {
@@ -60,16 +60,16 @@ wss.on('connection', (ws) => {
         timestamp: new Date().toISOString()
       }));
     } catch (error) {
-      console.error('❌ WebSocket message error:', error);
+      console.error(' WebSocket message error:', error);
     }
   });
 
   ws.on('close', () => {
-    console.log('🔌 WebSocket connection closed');
+    console.log('WebSocket connection closed');
   });
 
   ws.on('error', (error) => {
-    console.error('❌ WebSocket error:', error);
+    console.error(' WebSocket error:', error);
   });
 
   // Send welcome message
@@ -82,7 +82,7 @@ wss.on('connection', (ws) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('❌ Server error:', err.stack);
+  console.error('Server error:', err.stack);
   res.status(500).json({
     error: 'Something went wrong!',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
@@ -100,25 +100,8 @@ app.use('*', (req, res) => {
 // Start the server
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`🚀 Kloud-scaler K8s Monitoring Server running on port ${PORT}`);
-  console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
-  console.log(`🔌 WebSocket server running on ws://localhost:${PORT}`);
-  console.log(`🏥 Health check available at http://localhost:${PORT}/health`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('✅ Server closed');
-    process.exit(0);
-  });
-});
-
-process.on('SIGINT', () => {
-  console.log('🛑 SIGINT received, shutting down gracefully');
-  server.close(() => {
-    console.log('✅ Server closed');
-    process.exit(0);
-  });
+  console.log(` Kloud-scaler K8s Monitoring Server running on port ${PORT}`);
+  console.log(` API endpoints available at http://localhost:${PORT}/api`);
+  console.log(` WebSocket server running on ws://localhost:${PORT}`);
+  console.log(` Health check available at http://localhost:${PORT}/health`);
 });
