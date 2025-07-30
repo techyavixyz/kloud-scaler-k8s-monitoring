@@ -26,6 +26,7 @@ function App() {
     <AuthProvider>
     <ThemeProvider>
       <WebSocketProvider>
+        <Router>
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/*" element={
@@ -60,7 +61,6 @@ function App() {
                 </ProtectedRoute>
               } />
             </Routes>
-          </div>
         </Router>
       </WebSocketProvider>
     </ThemeProvider>
