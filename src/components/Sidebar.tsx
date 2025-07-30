@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Activity, FileText, Settings, GitBranch, X, ShieldIcon as Kubernetes, AlertTriangle, Server, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Activity, FileText, Settings, GitBranch, X, ShieldIcon as Kubernetes, AlertTriangle, Server, BarChart3, User, Shield } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 interface SidebarProps {
@@ -16,11 +16,23 @@ const navigation = [
   { name: 'Node Status', href: '/node-status', icon: Server },
   { name: 'Pod Status', href: '/pod-status', icon: BarChart3 },
   { name: 'Contexts', href: '/contexts', icon: GitBranch },
+  { name: 'Profile', href: '/profile', icon: User },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
+// Get admin navigation based on user role
+const getAdminNavigation = () => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.role === 'admin') {
+    return [{ name: 'Admin Panel', href: '/admin', icon: Shield }];
+  }
+  return [];
+};
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
+  const adminNav = getAdminNavigation();
+  const allNavigation = [...navigation, ...adminNav];
 
   return (
     <>
@@ -66,7 +78,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         <nav className="flex-1 px-2 pb-4 w-50">
           <ul className="space-y-2">
-            {navigation.map((item) => {
+            {allNavigation.map((item) => {
               const isActive = location.pathname === item.href;
               
               return (

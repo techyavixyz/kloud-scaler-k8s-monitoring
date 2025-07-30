@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const WebSocket = require('ws');
 const http = require('http');
+const { initializeDatabase } = require('./config/database');
 require('dotenv').config();
 
 const app = express();
@@ -26,8 +27,16 @@ const logRoutes = require('./routes/logs');
 const nodeRoutes = require('./routes/nodes');
 const namespaceRoutes = require('./routes/namespaces');
 const contextRoutes = require('./routes/contexts');
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
+const timeseriesRoutes = require('./routes/timeseries');
+const searchRoutes = require('./routes/search');
 
 // Route usage
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/metrics', timeseriesRoutes);
+app.use('/api/search', searchRoutes);
 app.use('/api', resourceRoutes);
 app.use('/api', podRoutes);
 app.use('/api', logRoutes);
@@ -100,6 +109,9 @@ app.use('*', (req, res) => {
 // Start the server
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
+  // Initialize database
+  initializeDatabase();
+  
   console.log(`🚀 Kloud-scaler K8s Monitoring Server running on port ${PORT}`);
   console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
   console.log(`🔌 WebSocket server running on ws://localhost:${PORT}`);
