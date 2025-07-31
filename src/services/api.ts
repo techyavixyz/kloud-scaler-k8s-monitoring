@@ -92,18 +92,74 @@ export async function fetchNamespaces() {
 
 // Contexts API
 export async function fetchContexts() {
-  const response = await fetch(`${API_BASE}/contexts`);
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch(`${API_BASE}/contexts`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch contexts');
   }
   return response.json();
 }
 
+export async function getUserContext() {
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch(`${API_BASE}/user-context`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch user context');
+  }
+  return response.json();
+}
+
+export async function setUserContext(contextName: string, kubeconfigPath: string) {
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch(`${API_BASE}/user-context`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ contextName, kubeconfigPath }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to set user context');
+  }
+  return response.json();
+}
+
+export async function uploadKubeconfig(file: File) {
+  const token = localStorage.getItem('auth_token');
+  const formData = new FormData();
+  formData.append('kubeconfig', file);
+
+  const response = await fetch(`${API_BASE}/contexts/upload`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    body: formData,
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to upload kubeconfig file');
+  }
+  return response.json();
+}
+
 export async function setContext(context: string) {
+  const token = localStorage.getItem('auth_token');
   const response = await fetch(`${API_BASE}/contexts/set`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify({ context }),
   });

@@ -1,4 +1,5 @@
 const { execShell } = require('../utils/kubectl');
+const { pool } = require('./authController');
 
 function parseCPU(value) {
   return value.endsWith('m') ? parseInt(value) / 1000 : parseFloat(value);
@@ -20,8 +21,25 @@ function formatMemory(valueMi) {
 }
 
 const getResourceUsage = async (req, res) => {
+  const userId = req.user?.id;
+  let kubeconfigArg = '';
+  
+  if (userId) {
+    try {
+      const result = await pool.query(
+        'SELECT kubeconfig_path FROM user_contexts WHERE user_id = $1 LIMIT 1',
+        [userId]
+      );
+      if (result.rows[0]?.kubeconfig_path) {
+        kubeconfigArg = `--kubeconfig="${result.rows[0].kubeconfig_path}"`;
+      }
+    } catch (error) {
+      console.error('Error getting user kubeconfig:', error);
+    }
+  }
+
   try {
-    const output = await execShell('kubectl top pods --all-namespaces --no-headers');
+    const output = await execShell(`kubectl ${kubeconfigArg} top pods --all-namespaces --no-headers`);
     const lines = output.split('\n');
     const nsUsage = {};
 
