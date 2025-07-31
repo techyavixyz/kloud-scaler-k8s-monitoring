@@ -18,7 +18,8 @@ const getContexts = async (req, res) => {
 };
 
 const setContext = async (req, res) => {
-  const { context } = req.body;
+  let { context } = req.body;
+  context = encodeURI(context)
   
   if (!context) {
     return res.status(400).json({ error: 'No context provided' });

@@ -1,7 +1,13 @@
 const { execShell } = require('../utils/kubectl');
 
 const getLogs = async (req, res) => {
-  const { namespace, appLabel, podName, tail = 50 } = req.query;
+  let { namespace, appLabel, podName, tail = '50' } = req.query;
+  namespace = encodeURI(namespace || '');
+  appLabel = encodeURI(appLabel || '');
+  podName = encodeURI(podName || '');
+  tail = encodeURI (String(tail).trim() || '50'); // Default to 50 lines if not provided or empty
+  
+
   
   if (!namespace || (!appLabel && !podName)) {
     return res.status(400).json({ error: 'Missing namespace and either appLabel or podName' });
