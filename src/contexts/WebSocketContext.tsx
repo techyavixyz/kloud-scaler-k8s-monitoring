@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { getBackendBaseUrl } from '../utils/url';
 
 interface WebSocketContextType {
   socket: WebSocket | null;
@@ -13,7 +14,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:3001');
+    const ws = new WebSocket(getBackendBaseUrl().ws);
     
     ws.onopen = () => {
       console.log('🔌 WebSocket connected');

@@ -1,4 +1,6 @@
-const API_BASE = 'http://localhost:3001/api';
+import { getBackendBaseUrl } from '../utils/url';
+
+const API_BASE = `${getBackendBaseUrl().http}/api`;
 
 export interface ResourceUsage {
   namespace: string;
