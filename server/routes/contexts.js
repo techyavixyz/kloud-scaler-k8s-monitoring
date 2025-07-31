@@ -4,12 +4,15 @@ const { authenticateToken, requireRole } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 
 // Configure multer for kubeconfig file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const kubeDir = path.join(process.env.HOME || '/root', '.kube');
+    const kubeDir = path.join(process.env.HOME || process.env.USERPROFILE || '/root', '.kube');
     if (!fs.existsSync(kubeDir)) {
       fs.mkdirSync(kubeDir, { recursive: true });
     }

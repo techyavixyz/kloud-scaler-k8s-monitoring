@@ -6,6 +6,10 @@ const { pool } = require('./authController');
 // Initialize user contexts table
 const initializeUserContextsTable = async () => {
   try {
+    // Drop existing tables if they exist to recreate with correct schema
+    await pool.query('DROP TABLE IF EXISTS user_contexts CASCADE');
+    await pool.query('DROP TABLE IF EXISTS kubeconfig_files CASCADE');
+    
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_contexts (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
