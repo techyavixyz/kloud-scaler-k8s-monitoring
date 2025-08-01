@@ -66,7 +66,7 @@ const ensureKubeDirectory = () => {
 
 const getContexts = async (req, res) => {
   try {
-    // Get all available kubeconfig files
+    // Get all available kubeconfig files (only admins can see all, viewers see what they have access to)
     const result = await pool.query('SELECT * FROM kubeconfig_files ORDER BY created_at DESC');
     const kubeconfigFiles = result.rows;
     
@@ -79,7 +79,8 @@ const getContexts = async (req, res) => {
           name: name.trim(),
           kubeconfigFile: file.filename,
           kubeconfigPath: file.file_path,
-          displayName: `${name.trim()} (${file.context_name})`
+          displayName: `${name.trim()} (${file.context_name})`,
+          contextDescription: file.context_name
         }));
         allContexts.push(...contexts);
       } catch (error) {
@@ -122,6 +123,11 @@ const setUserContext = async (req, res) => {
       return res.status(400).json({ error: 'Context name and kubeconfig path are required' });
     }
 
+    // Verify the kubeconfig file exists
+    if (!fs.existsSync(kubeconfigPath)) {
+      return res.status(400).json({ error: 'Kubeconfig file not found' });
+    }
+
     // Verify the context exists in the kubeconfig file
     try {
       console.log(`🔄 Verifying context ${contextName} in ${kubeconfigPath} for user ${userId}`);
@@ -151,6 +157,15 @@ const setUserContext = async (req, res) => {
 const uploadKubeconfig = async (req, res) => {
   try {
     const { contextName } = req.body;
+    const uploadedBy = req.user.id;
+    
+    // Check if user has admin role
+    const userResult = await pool.query('SELECT roles FROM users WHERE id = $1', [uploadedBy]);
+    const userRoles = userResult.rows[0]?.roles || [];
+    
+    if (!userRoles.includes('admin')) {
+      return res.status(403).json({ error: 'Only administrators can upload kubeconfig files' });
+    }
     
     if (!req.file) {
       return res.status(400).json({ error: 'No kubeconfig file uploaded' });
@@ -165,7 +180,6 @@ const uploadKubeconfig = async (req, res) => {
     }
 
     const { originalname, path: tempFilePath } = req.file;
-    const uploadedBy = req.user.id;
 
     // Verify it's a valid kubeconfig file
     try {
@@ -181,7 +195,8 @@ const uploadKubeconfig = async (req, res) => {
     
     // Create a safe filename for the kubeconfig
     const safeContextName = contextName.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
-    const kubeconfigFilename = `config_${safeContextName}`;
+    const timestamp = Date.now();
+    const kubeconfigFilename = `config_${safeContextName}_${timestamp}`;
     const finalPath = path.join(kubeDir, kubeconfigFilename);
 
     // Move file from temp location to ~/.kube directory
@@ -190,6 +205,18 @@ const uploadKubeconfig = async (req, res) => {
 
     // Set proper permissions (readable by owner only)
     fs.chmodSync(finalPath, 0o600);
+
+    // Check if context name already exists
+    const existingContext = await pool.query(
+      'SELECT id FROM kubeconfig_files WHERE context_name = $1',
+      [contextName.trim()]
+    );
+    
+    if (existingContext.rows.length > 0) {
+      // Remove the uploaded file
+      fs.unlinkSync(finalPath);
+      return res.status(400).json({ error: 'A kubeconfig with this context name already exists' });
+    }
 
     // Store file info in database
     await pool.query(

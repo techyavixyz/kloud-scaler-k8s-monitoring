@@ -169,7 +169,8 @@ export async function uploadKubeconfig(file: File, contextName: string) {
   });
   
   if (!response.ok) {
-    throw new Error('Failed to upload kubeconfig file');
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to upload kubeconfig file');
   }
   return response.json();
 }

@@ -19,9 +19,12 @@ function execShellWithKubeconfig(command, kubeconfigPath = null) {
     let finalCommand = command;
     
     // If kubeconfig path is provided, use it
-    if (kubeconfigPath) {
+    if (kubeconfigPath && kubeconfigPath !== 'default') {
       // Insert --kubeconfig flag after kubectl
       finalCommand = command.replace(/^kubectl/, `kubectl --kubeconfig="${kubeconfigPath}"`);
+    } else if (!kubeconfigPath || kubeconfigPath === 'default') {
+      // If no kubeconfig path or 'default', reject the command
+      return reject('❌ Error: No kubeconfig file configured for this user. Please upload a kubeconfig file first.');
     }
     
     console.log('🔧 Executing command:', finalCommand);
@@ -48,7 +51,7 @@ async function execKubectl(command, userId = null) {
   
   if (userId) {
     kubeconfigPath = await getUserKubeconfigPath(userId);
-    console.log(`🔍 User ${userId} kubeconfig path:`, kubeconfigPath || 'default');
+    console.log(`🔍 User ${userId} kubeconfig path:`, kubeconfigPath || 'none configured');
   }
   
   return execShellWithKubeconfig(command, kubeconfigPath);

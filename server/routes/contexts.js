@@ -4,6 +4,7 @@ const path = require('path');
 const os = require('os');
 const { getContexts, setContext, uploadKubeconfig, getUserContext, setUserContext } = require('../controllers/contextController');
 const { authenticateToken } = require('../middleware/auth');
+const { requireRole } = require('../middleware/auth');
 const router = express.Router();
 
 // Configure multer for file uploads to temp directory
@@ -32,7 +33,7 @@ const upload = multer({
 // Routes
 router.get('/contexts', authenticateToken, getContexts);
 router.post('/contexts/set', authenticateToken, setContext);
-router.post('/contexts/upload', authenticateToken, upload.single('kubeconfig'), uploadKubeconfig);
+router.post('/contexts/upload', authenticateToken, requireRole(['admin']), upload.single('kubeconfig'), uploadKubeconfig);
 router.get('/user-context', authenticateToken, getUserContext);
 router.post('/user-context', authenticateToken, setUserContext);
 

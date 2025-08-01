@@ -96,7 +96,9 @@ export default function Contexts() {
       successDiv.textContent = 'Kubeconfig file uploaded successfully!';
       document.body.appendChild(successDiv);
       setTimeout(() => {
-        document.body.removeChild(successDiv);
+        if (document.body.contains(successDiv)) {
+          document.body.removeChild(successDiv);
+        }
       }, 3000);
       
       setShowUpload(false);
@@ -108,10 +110,12 @@ export default function Contexts() {
       // Show error message
       const errorDiv = document.createElement('div');
       errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-      errorDiv.textContent = 'Failed to upload kubeconfig file';
+      errorDiv.textContent = error.message || 'Failed to upload kubeconfig file';
       document.body.appendChild(errorDiv);
       setTimeout(() => {
-        document.body.removeChild(errorDiv);
+        if (document.body.contains(errorDiv)) {
+          document.body.removeChild(errorDiv);
+        }
       }, 3000);
     } finally {
       setUploading(false);
@@ -189,6 +193,11 @@ export default function Contexts() {
               </button>
             </div>
 
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                <strong>Admin Only:</strong> Only administrators can upload kubeconfig files. Once uploaded, all users can switch to these contexts.
+              </p>
+            </div>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -203,7 +212,7 @@ export default function Contexts() {
                   required
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  This name will be displayed in the context list
+                  This name will be displayed in the context list and must be unique
                 </p>
               </div>
               
