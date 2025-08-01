@@ -36,7 +36,12 @@ export interface LogsRequest {
 
 // Resource Usage API
 export async function fetchResourceUsage(): Promise<ResourceUsage[]> {
-  const response = await fetch(`${API_BASE}/resource-usage`);
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch(`${API_BASE}/resource-usage`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch resource usage');
   }
@@ -53,7 +58,12 @@ export async function fetchMetricsHistory(namespace: string, hours: number) {
 
 // Pods API
 export async function fetchPods(namespace: string) {
-  const response = await fetch(`${API_BASE}/pods?namespace=${encodeURIComponent(namespace)}`);
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch(`${API_BASE}/pods?namespace=${encodeURIComponent(namespace)}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch pods');
   }
@@ -74,7 +84,12 @@ export async function fetchLogs(request: LogsRequest) {
     params.append('appLabel', request.appLabel);
   }
 
-  const response = await fetch(`${API_BASE}/logs?${params}`);
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch(`${API_BASE}/logs?${params}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch logs');
   }
@@ -83,7 +98,12 @@ export async function fetchLogs(request: LogsRequest) {
 
 // Namespaces API
 export async function fetchNamespaces() {
-  const response = await fetch(`${API_BASE}/namespaces`);
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch(`${API_BASE}/namespaces`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch namespaces');
   }

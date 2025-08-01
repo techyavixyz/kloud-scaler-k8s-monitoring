@@ -1,18 +1,10 @@
-const { exec } = require('child_process');
-
-function execShell(command) {
-  return new Promise((resolve, reject) => {
-    exec(command, { maxBuffer: 1024 * 5000 }, (error, stdout, stderr) => {
-      if (error) return reject(`❌ Error: ${error.message}`);
-      if (stderr && !stdout) return reject(`❌ stderr: ${stderr}`);
-      resolve(stdout.trim());
-    });
-  });
-}
+const { execKubectl } = require('../utils/kubectl');
 
 const getNodes = async (req, res) => {
+  const userId = req.user?.id;
+  
   try {
-    const output = await execShell('kubectl get nodes');
+    const output = await execKubectl('kubectl get nodes', userId);
     const lines = output.trim().split('\n');
     const nodes = [];
     
@@ -38,8 +30,10 @@ const getNodes = async (req, res) => {
 };
 
 const getNodeMetrics = async (req, res) => {
+  const userId = req.user?.id;
+  
   try {
-    const output = await execShell('kubectl top nodes');
+    const output = await execKubectl('kubectl top nodes', userId);
     const lines = output.trim().split('\n');
     const nodeMetrics = [];
     

@@ -1,24 +1,16 @@
-const { exec } = require('child_process');
-
-function execShell(command) {
-  return new Promise((resolve, reject) => {
-    exec(command, { maxBuffer: 1024 * 5000 }, (error, stdout, stderr) => {
-      if (error) return reject(`❌ Error: ${error.message}`);
-      if (stderr && !stdout) return reject(`❌ stderr: ${stderr}`);
-      resolve(stdout.trim());
-    });
-  });
-}
+const { execKubectl } = require('../utils/kubectl');
 
 const getPods = async (req, res) => {
   const { namespace } = req.query;
+  const userId = req.user?.id;
+  
   if (!namespace) {
     return res.status(400).json({ error: 'Missing namespace' });
   }
 
   try {
     const cmd = `kubectl get pods -n ${namespace} --no-headers -o custom-columns=NAME:.metadata.name,STATUS:.status.phase,READY:.status.conditions[?(@.type=="Ready")].status,RESTARTS:.status.containerStatuses[0].restartCount,AGE:.metadata.creationTimestamp,NODE:.spec.nodeName`;
-    const output = await execShell(cmd);
+    const output = await execKubectl(cmd, userId);
     
     if (!output) {
       return res.json({ pods: [] });
@@ -34,7 +26,7 @@ const getPods = async (req, res) => {
         let labels = {};
         try {
           const labelCmd = `kubectl get pod ${parts[0]} -n ${namespace} -o jsonpath='{.metadata.labels}'`;
-          const labelOutput = await execShell(labelCmd);
+          const labelOutput = await execKubectl(labelCmd, userId);
           if (labelOutput && labelOutput !== '{}') {
             labels = JSON.parse(labelOutput.replace(/'/g, '"'));
           }
@@ -63,10 +55,11 @@ const getPods = async (req, res) => {
 
 const getFailedPods = async (req, res) => {
   const { namespace } = req.query;
+  const userId = req.user?.id;
   
   try {
     const nsArg = namespace ? `-n ${namespace}` : '--all-namespaces';
-    const output = await execShell(`kubectl get pods ${nsArg} --no-headers`);
+    const output = await execKubectl(`kubectl get pods ${nsArg} --no-headers`, userId);
     
     if (!output) {
       return res.json({ failedPods: [] });
@@ -105,13 +98,14 @@ const getFailedPods = async (req, res) => {
 
 const getPodDetails = async (req, res) => {
   const { namespace, pod } = req.query;
+  const userId = req.user?.id;
   
   if (!namespace || !pod) {
     return res.status(400).json({ error: 'Missing namespace or pod name' });
   }
 
   try {
-    const output = await execShell(`kubectl describe pod ${pod} -n ${namespace}`);
+    const output = await execKubectl(`kubectl describe pod ${pod} -n ${namespace}`, userId);
     const lines = output.split('\n');
 
     let reason = '';
@@ -152,16 +146,18 @@ const getPodDetails = async (req, res) => {
 };
 
 const getAllPodMetrics = async (req, res) => {
+  const userId = req.user?.id;
+  
   try {
     // Get all namespaces
-    const nsOutput = await execShell('kubectl get ns --no-headers -o custom-columns=":metadata.name"');
+    const nsOutput = await execKubectl('kubectl get ns --no-headers -o custom-columns=":metadata.name"', userId);
     const namespaces = nsOutput.split('\n').map(ns => ns.trim()).filter(Boolean);
 
     const namespaceMetrics = [];
 
     for (const ns of namespaces) {
       try {
-        const output = await execShell(`kubectl top pods -n ${ns} --no-headers`);
+        const output = await execKubectl(`kubectl top pods -n ${ns} --no-headers`, userId);
         if (!output) continue;
 
         const lines = output.split('\n');

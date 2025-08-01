@@ -1,18 +1,10 @@
-const { exec } = require('child_process');
-
-function execShell(command) {
-  return new Promise((resolve, reject) => {
-    exec(command, { maxBuffer: 1024 * 5000 }, (error, stdout, stderr) => {
-      if (error) return reject(`❌ Error: ${error.message}`);
-      if (stderr && !stdout) return reject(`❌ stderr: ${stderr}`);
-      resolve(stdout.trim());
-    });
-  });
-}
+const { execKubectl } = require('../utils/kubectl');
 
 const getNamespaces = async (req, res) => {
+  const userId = req.user?.id;
+  
   try {
-    const output = await execShell('kubectl get namespaces --no-headers');
+    const output = await execKubectl('kubectl get namespaces --no-headers', userId);
     const lines = output.split('\n');
     const namespaces = [];
 
