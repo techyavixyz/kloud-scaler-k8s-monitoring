@@ -1,9 +1,7 @@
 const express = require('express');
 const { getContexts, setContext, uploadKubeconfig, getUserContext, setUserContext } = require('../controllers/contextController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
