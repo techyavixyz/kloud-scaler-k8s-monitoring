@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Server, Cpu, HardDrive, RefreshCw, AlertTriangle, CheckCircle, Activity, Clock } from 'lucide-react';
+import { Server, Cpu, HardDrive, RefreshCw, AlertTriangle, CheckCircle, Activity, Clock, TrendingUp } from 'lucide-react';
 import MetricsCard from '../components/MetricsCard';
+import NodeHistoricalChart from '../components/NodeHistoricalChart';
 
 interface Node {
   name: string;
@@ -21,6 +22,8 @@ interface NodeMetric {
 export default function NodeStatus() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [nodeMetrics, setNodeMetrics] = useState<NodeMetric[]>([]);
+  const [selectedNode, setSelectedNode] = useState<string>('');
+  const [timeRange, setTimeRange] = useState<string>('24');
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
@@ -54,6 +57,11 @@ export default function NodeStatus() {
       setNodes(nodesData.nodes || []);
       setNodeMetrics(metricsData.nodeMetrics || []);
       setLastUpdated(new Date());
+      
+      // Set first node as selected if none selected
+      if (!selectedNode && nodesData.nodes && nodesData.nodes.length > 0) {
+        setSelectedNode(nodesData.nodes[0].name);
+      }
     } catch (error) {
       console.error('Failed to fetch cluster status:', error);
     } finally {
@@ -163,6 +171,48 @@ export default function NodeStatus() {
         />
       </div>
 
+      {/* Historical Chart */}
+      {selectedNode && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
+              <TrendingUp className="w-5 h-5 text-blue-500" />
+              <span>Historical Usage - {selectedNode}</span>
+            </h2>
+            
+            <div className="flex items-center space-x-3 mt-4 md:mt-0">
+              <select
+                value={selectedNode}
+                onChange={(e) => setSelectedNode(e.target.value)}
+                className="text-white px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {nodes.map(node => (
+                  <option key={node.name} value={node.name}>
+                    {node.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="text-white px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="1">Last Hour</option>
+                <option value="6">Last 6 Hours</option>
+                <option value="24">Last 24 Hours</option>
+                <option value="168">Last Week</option>
+              </select>
+            </div>
+          </div>
+
+          <NodeHistoricalChart 
+            nodeName={selectedNode} 
+            timeRange={parseInt(timeRange)} 
+          />
+        </div>
+      )}
+
       {/* Node Status Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
         <div className="flex items-center justify-between mb-6">
@@ -204,6 +254,9 @@ export default function NodeStatus() {
                   </th>
                   <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">
                     Memory Usage
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -276,6 +329,18 @@ export default function NodeStatus() {
                         ) : (
                           <span className="text-slate-400">N/A</span>
                         )}
+                      </td>
+                      <td className="py-4 px-4">
+                        <button
+                          onClick={() => setSelectedNode(node.name)}
+                          className={`font-medium transition-colors ${
+                            selectedNode === node.name
+                              ? 'text-blue-700 dark:text-blue-300'
+                              : 'text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
+                          }`}
+                        >
+                          {selectedNode === node.name ? 'Selected' : 'View History'}
+                        </button>
                       </td>
                     </tr>
                   );

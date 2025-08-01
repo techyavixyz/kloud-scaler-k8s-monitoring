@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Package, RefreshCw, Search, Filter, BarChart3, Cpu, HardDrive } from 'lucide-react';
+import { Package, RefreshCw, Search, Filter, BarChart3, Cpu, HardDrive, TrendingUp } from 'lucide-react';
 import { fetchNamespaces } from '../services/api';
+import PodHistoricalChart from '../components/PodHistoricalChart';
 
 interface PodMetric {
   pod: string;
@@ -21,6 +22,8 @@ export default function PodStatus() {
   const [namespaces, setNamespaces] = useState<string[]>([]);
   const [namespaceMetrics, setNamespaceMetrics] = useState<NamespaceMetrics[]>([]);
   const [selectedNamespace, setSelectedNamespace] = useState('');
+  const [selectedNamespaceForHistory, setSelectedNamespaceForHistory] = useState('');
+  const [timeRange, setTimeRange] = useState<string>('24');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'cpu' | 'memory'>('name');
@@ -52,6 +55,11 @@ export default function PodStatus() {
       });
       const data = await response.json();
       setNamespaceMetrics(data.namespaceMetrics || []);
+      
+      // Set first namespace as selected for history if none selected
+      if (!selectedNamespaceForHistory && data.namespaceMetrics && data.namespaceMetrics.length > 0) {
+        setSelectedNamespaceForHistory(data.namespaceMetrics[0].namespace);
+      }
     } catch (error) {
       console.error('Failed to fetch pod metrics:', error);
       setNamespaceMetrics([]);
@@ -254,7 +262,47 @@ export default function PodStatus() {
             </select>
           </div>
         </div>
+      {/* Historical Chart */}
+      {selectedNamespaceForHistory && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
+              <TrendingUp className="w-5 h-5 text-purple-500" />
+              <span>Historical Usage - {selectedNamespaceForHistory}</span>
+            </h2>
+            
+            <div className="flex items-center space-x-3 mt-4 md:mt-0">
+              <select
+                value={selectedNamespaceForHistory}
+                onChange={(e) => setSelectedNamespaceForHistory(e.target.value)}
+                className="text-white px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                {namespaceMetrics.map(nsMetric => (
+                  <option key={nsMetric.namespace} value={nsMetric.namespace}>
+                    {nsMetric.namespace}
+                  </option>
+                ))}
+              </select>
       </div>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="text-white px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="1">Last Hour</option>
+                <option value="6">Last 6 Hours</option>
+                <option value="24">Last 24 Hours</option>
+                <option value="168">Last Week</option>
+              </select>
+            </div>
+          </div>
+
+          <PodHistoricalChart 
+            namespace={selectedNamespaceForHistory} 
+            timeRange={parseInt(timeRange)} 
+          />
+        </div>
+      )}
 
       {/* Pod Metrics by Namespace */}
       <div className="space-y-6">
@@ -286,6 +334,16 @@ export default function PodStatus() {
                     <HardDrive className="w-4 h-4" />
                     <span>Total Memory: {nsMetric.totalMemory >= 1024 ? `${(nsMetric.totalMemory / 1024).toFixed(2)} GiB` : `${nsMetric.totalMemory} MiB`}</span>
                   </div>
+                  <button
+                    onClick={() => setSelectedNamespaceForHistory(nsMetric.namespace)}
+                    className={`text-xs px-2 py-1 rounded-full transition-colors ${
+                      selectedNamespaceForHistory === nsMetric.namespace
+                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-purple-100 hover:text-purple-800 dark:hover:bg-purple-900 dark:hover:text-purple-300'
+                    }`}
+                  >
+                    {selectedNamespaceForHistory === nsMetric.namespace ? 'Selected for History' : 'View History'}
+                  </button>
                 </div>
               </div>
 
