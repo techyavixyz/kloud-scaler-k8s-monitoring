@@ -34,9 +34,18 @@ export default function NodeStatus() {
   const checkClusterStatus = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('auth_token');
       const [nodesResponse, metricsResponse] = await Promise.all([
-        fetch('http://localhost:3001/api/nodes'),
-        fetch('http://localhost:3001/api/node-metrics')
+        fetch('http://localhost:3001/api/nodes', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }),
+        fetch('http://localhost:3001/api/node-metrics', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
       ]);
 
       const nodesData = await nodesResponse.json();

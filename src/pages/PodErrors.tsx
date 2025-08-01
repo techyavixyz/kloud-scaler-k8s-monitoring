@@ -39,8 +39,13 @@ export default function PodErrors() {
   const checkFailedPods = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('auth_token');
       const nsParam = selectedNamespace ? `?namespace=${selectedNamespace}` : '';
-      const response = await fetch(`http://localhost:3001/api/failed-pods${nsParam}`);
+      const response = await fetch(`http://localhost:3001/api/failed-pods${nsParam}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       setFailedPods(data.failedPods || []);
     } catch (error) {
@@ -53,7 +58,12 @@ export default function PodErrors() {
 
   const getFailureDetails = async (pod: FailedPod) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/pod-details?namespace=${pod.namespace}&pod=${pod.pod}`);
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`http://localhost:3001/api/pod-details?namespace=${pod.namespace}&pod=${pod.pod}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       setSelectedPod({ ...pod, ...data });
       setShowDetails(true);

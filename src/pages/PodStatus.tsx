@@ -44,7 +44,12 @@ export default function PodStatus() {
   const loadAllPodMetrics = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/api/all-pod-metrics');
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('http://localhost:3001/api/all-pod-metrics', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       setNamespaceMetrics(data.namespaceMetrics || []);
     } catch (error) {
