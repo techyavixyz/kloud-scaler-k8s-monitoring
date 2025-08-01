@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Server, Cpu, HardDrive, RefreshCw, AlertTriangle, CheckCircle, Activity, Clock, TrendingUp } from 'lucide-react';
+import { Server, Cpu, HardDrive, RefreshCw, AlertTriangle, CheckCircle, Activity, Clock, TrendingUp, BarChart3 } from 'lucide-react';
 import MetricsCard from '../components/MetricsCard';
 import NodeHistoricalChart from '../components/NodeHistoricalChart';
 
@@ -175,10 +175,15 @@ export default function NodeStatus() {
       {selectedNode && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-blue-500" />
-              <span>Historical Usage - {selectedNode}</span>
-            </h2>
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5 text-blue-500" />
+                <span>Historical Node Usage - {selectedNode}</span>
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                Monitor CPU and memory usage trends over time
+              </p>
+            </div>
             
             <div className="flex items-center space-x-3 mt-4 md:mt-0">
               <select
@@ -212,6 +217,93 @@ export default function NodeStatus() {
           />
         </div>
       )}
+
+      {/* Resource Usage Trends */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
+              <BarChart3 className="w-5 h-5 text-green-500" />
+              <span>Resource Usage Trends</span>
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+              Compare resource usage across all nodes
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* CPU Usage Comparison */}
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <h3 className="font-medium text-slate-900 dark:text-white mb-4 flex items-center space-x-2">
+              <Cpu className="w-4 h-4 text-blue-500" />
+              <span>CPU Usage Comparison</span>
+            </h3>
+            <div className="space-y-3">
+              {nodeMetrics.map((metric, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3 flex-1">
+                    <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      {metric.name}
+                    </span>
+                    <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          parseInt(metric.cpuPercentage) > 80 ? 'bg-red-500' :
+                          parseInt(metric.cpuPercentage) > 60 ? 'bg-yellow-500' : 'bg-blue-500'
+                        }`}
+                        style={{ width: `${Math.min(parseInt(metric.cpuPercentage), 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className={`text-sm font-medium ml-3 ${
+                    parseInt(metric.cpuPercentage) > 80 ? 'text-red-600 dark:text-red-400' :
+                    parseInt(metric.cpuPercentage) > 60 ? 'text-yellow-600 dark:text-yellow-400' :
+                    'text-blue-600 dark:text-blue-400'
+                  }`}>
+                    {metric.cpuPercentage}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Memory Usage Comparison */}
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <h3 className="font-medium text-slate-900 dark:text-white mb-4 flex items-center space-x-2">
+              <HardDrive className="w-4 h-4 text-purple-500" />
+              <span>Memory Usage Comparison</span>
+            </h3>
+            <div className="space-y-3">
+              {nodeMetrics.map((metric, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3 flex-1">
+                    <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      {metric.name}
+                    </span>
+                    <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          parseInt(metric.memoryPercentage) > 80 ? 'bg-red-500' :
+                          parseInt(metric.memoryPercentage) > 60 ? 'bg-yellow-500' : 'bg-purple-500'
+                        }`}
+                        style={{ width: `${Math.min(parseInt(metric.memoryPercentage), 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className={`text-sm font-medium ml-3 ${
+                    parseInt(metric.memoryPercentage) > 80 ? 'text-red-600 dark:text-red-400' :
+                    parseInt(metric.memoryPercentage) > 60 ? 'text-yellow-600 dark:text-yellow-400' :
+                    'text-purple-600 dark:text-purple-400'
+                  }`}>
+                    {metric.memoryPercentage}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Node Status Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
