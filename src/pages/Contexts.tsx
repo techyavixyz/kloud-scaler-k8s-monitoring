@@ -211,7 +211,7 @@ export default function Contexts() {
         </div>
 
         <div className="flex items-center space-x-3 mt-4 md:mt-0">
-          {hasRole('admin') && (
+          {/* {hasRole('admin') && (
             <button
               <button
                 onClick={() => setShowManagement(true)}
@@ -226,7 +226,27 @@ export default function Contexts() {
               <Upload className="w-4 h-4" />
               <span>Upload Kubeconfig</span>
             </button>
-          )}
+          )} */}
+
+{hasRole('admin') && (
+  <>
+    <button
+      onClick={() => setShowManagement(true)}
+      className="flex items-center space-x-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+    >
+      <Eye className="w-4 h-4" />
+      <span>Manage Files</span>
+    </button>
+    <button
+      onClick={() => setShowUpload(true)}
+      className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+    >
+      <Upload className="w-4 h-4" />
+      <span>Upload Kubeconfig</span>
+    </button>
+  </>
+)}
+
           
           <button
             onClick={loadContexts}
