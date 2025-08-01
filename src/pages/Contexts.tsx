@@ -50,15 +50,19 @@ export default function Contexts() {
   const handleSetUserContext = async (context: Context) => {
     try {
       setSwitching(context.name);
+      console.log('🔄 Switching to context:', context.name, 'with kubeconfig:', context.kubeconfigPath);
       await setUserContext(context.name, context.kubeconfigPath);
       setUserContextState(context.name);
+      console.log('✅ Context switched successfully to:', context.name);
       // Show success message
       const successDiv = document.createElement('div');
       successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
       successDiv.textContent = `Context switched to ${context.name}`;
       document.body.appendChild(successDiv);
       setTimeout(() => {
-        document.body.removeChild(successDiv);
+        if (document.body.contains(successDiv)) {
+          document.body.removeChild(successDiv);
+        }
       }, 3000);
     } catch (error) {
       console.error('Failed to set user context:', error);
@@ -68,7 +72,9 @@ export default function Contexts() {
       errorDiv.textContent = 'Failed to switch context';
       document.body.appendChild(errorDiv);
       setTimeout(() => {
-        document.body.removeChild(errorDiv);
+        if (document.body.contains(errorDiv)) {
+          document.body.removeChild(errorDiv);
+        }
       }, 3000);
     } finally {
       setSwitching(null);

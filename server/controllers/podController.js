@@ -9,10 +9,12 @@ const getPods = async (req, res) => {
   }
 
   try {
+    console.log(`🚀 Getting pods for user: ${userId}, namespace: ${namespace}`);
     const cmd = `kubectl get pods -n ${namespace} --no-headers -o custom-columns=NAME:.metadata.name,STATUS:.status.phase,READY:.status.conditions[?(@.type=="Ready")].status,RESTARTS:.status.containerStatuses[0].restartCount,AGE:.metadata.creationTimestamp,NODE:.spec.nodeName`;
     const output = await execKubectl(cmd, userId);
     
     if (!output) {
+      console.log(`🚀 No pods found for user ${userId} in namespace ${namespace}`);
       return res.json({ pods: [] });
     }
 
@@ -46,6 +48,7 @@ const getPods = async (req, res) => {
       }
     }
 
+    console.log(`🚀 Pods result for user ${userId}:`, pods.length, 'pods in', namespace);
     res.json({ pods });
   } catch (err) {
     console.error('Get pods error:', err);

@@ -23,6 +23,7 @@ const getResourceUsage = async (req, res) => {
   const userId = req.user?.id;
 
   try {
+    console.log(`📊 Getting resource usage for user: ${userId}`);
     const output = await execKubectl('kubectl top pods --all-namespaces --no-headers', userId);
     const lines = output.split('\n');
     const nsUsage = {};
@@ -56,6 +57,7 @@ const getResourceUsage = async (req, res) => {
       timestamp: new Date().toISOString()
     }));
 
+    console.log(`📊 Resource usage result for user ${userId}:`, result.length, 'namespaces');
     res.json(result);
   } catch (err) {
     console.error('Resource usage error:', err);

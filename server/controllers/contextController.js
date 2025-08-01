@@ -124,8 +124,11 @@ const setUserContext = async (req, res) => {
 
     // Verify the context exists in the kubeconfig file
     try {
+      console.log(`🔄 Verifying context ${contextName} in ${kubeconfigPath} for user ${userId}`);
       await execShell(`kubectl --kubeconfig="${kubeconfigPath}" config get-contexts ${contextName}`);
+      console.log(`✅ Context ${contextName} verified for user ${userId}`);
     } catch (error) {
+      console.error(`❌ Context verification failed for user ${userId}:`, error);
       return res.status(400).json({ error: 'Invalid context or kubeconfig file' });
     }
 
@@ -137,6 +140,7 @@ const setUserContext = async (req, res) => {
       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
     `, [userId, contextName, kubeconfigPath]);
 
+    console.log(`✅ Context set to ${contextName} for user ${userId}`);
     res.json({ message: `Context set to ${contextName}` });
   } catch (error) {
     console.error('Set user context error:', error);

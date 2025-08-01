@@ -4,6 +4,7 @@ const getNodes = async (req, res) => {
   const userId = req.user?.id;
   
   try {
+    console.log(`🖥️ Getting nodes for user: ${userId}`);
     const output = await execKubectl('kubectl get nodes', userId);
     const lines = output.trim().split('\n');
     const nodes = [];
@@ -22,6 +23,7 @@ const getNodes = async (req, res) => {
       }
     }
     
+    console.log(`🖥️ Nodes result for user ${userId}:`, nodes.length, 'nodes');
     res.json({ nodes });
   } catch (err) {
     console.error('Get nodes error:', err);
@@ -33,6 +35,7 @@ const getNodeMetrics = async (req, res) => {
   const userId = req.user?.id;
   
   try {
+    console.log(`📊 Getting node metrics for user: ${userId}`);
     const output = await execKubectl('kubectl top nodes', userId);
     const lines = output.trim().split('\n');
     const nodeMetrics = [];
@@ -51,6 +54,7 @@ const getNodeMetrics = async (req, res) => {
       }
     }
     
+    console.log(`📊 Node metrics result for user ${userId}:`, nodeMetrics.length, 'nodes');
     res.json({ nodeMetrics });
   } catch (err) {
     console.error('Node metrics error:', err);

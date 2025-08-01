@@ -24,11 +24,20 @@ function execShellWithKubeconfig(command, kubeconfigPath = null) {
       finalCommand = command.replace(/^kubectl/, `kubectl --kubeconfig="${kubeconfigPath}"`);
     }
     
-    console.log('Executing command:', finalCommand);
+    console.log('🔧 Executing command:', finalCommand);
     
     exec(finalCommand, { maxBuffer: 1024 * 5000 }, (error, stdout, stderr) => {
-      if (error) return reject(`❌ Error: ${error.message}`);
-      if (stderr && !stdout) return reject(`❌ stderr: ${stderr}`);
+      if (error) {
+        console.error('❌ Command failed:', finalCommand);
+        console.error('❌ Error:', error.message);
+        return reject(`❌ Error: ${error.message}`);
+      }
+      if (stderr && !stdout) {
+        console.error('❌ Command stderr:', finalCommand);
+        console.error('❌ stderr:', stderr);
+        return reject(`❌ stderr: ${stderr}`);
+      }
+      console.log('✅ Command success:', finalCommand);
       resolve(stdout.trim());
     });
   });
@@ -39,6 +48,7 @@ async function execKubectl(command, userId = null) {
   
   if (userId) {
     kubeconfigPath = await getUserKubeconfigPath(userId);
+    console.log(`🔍 User ${userId} kubeconfig path:`, kubeconfigPath || 'default');
   }
   
   return execShellWithKubeconfig(command, kubeconfigPath);

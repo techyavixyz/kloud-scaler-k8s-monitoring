@@ -54,9 +54,14 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const handleContextSwitch = async (context: Context) => {
     try {
       setSwitchingContext(true);
+      console.log('🔄 Header: Switching to context:', context.name);
       await setUserContext(context.name, context.kubeconfigPath);
       setUserContextState(context.name);
       setShowContextDropdown(false);
+      console.log('✅ Header: Context switched successfully to:', context.name);
+      
+      // Force refresh of current page data
+      window.location.reload();
     } catch (error) {
       console.error('Failed to switch context:', error);
     } finally {
