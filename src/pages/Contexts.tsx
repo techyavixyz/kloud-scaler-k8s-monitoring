@@ -18,6 +18,7 @@ export default function Contexts() {
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [contextName, setContextName] = useState('');
   const { hasRole } = useAuth();
 
   useEffect(() => {
@@ -61,14 +62,18 @@ export default function Contexts() {
   };
 
   const handleFileUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || !contextName.trim()) {
+      alert('Please select a file and enter a context name');
+      return;
+    }
 
     try {
       setUploading(true);
-      await uploadKubeconfig(selectedFile);
+      await uploadKubeconfig(selectedFile, contextName.trim());
       alert('Kubeconfig file uploaded successfully!');
       setShowUpload(false);
       setSelectedFile(null);
+      setContextName('');
       await loadContexts();
     } catch (error) {
       console.error('Failed to upload kubeconfig:', error);
@@ -152,14 +157,35 @@ export default function Contexts() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Select Kubeconfig File
+                  Context Name *
+                </label>
+                <input
+                  type="text"
+                  value={contextName}
+                  onChange={(e) => setContextName(e.target.value)}
+                  placeholder="Enter a name for this context (e.g., Production, Staging)"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  required
+                />
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  This name will be displayed in the context list
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Select Kubeconfig File *
                 </label>
                 <input
                   type="file"
                   onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800"
                   accept=".yaml,.yml,.config,*"
+                  required
                 />
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Upload your Kubernetes config file
+                </p>
               </div>
 
               <div className="flex justify-end space-x-3">
@@ -171,7 +197,7 @@ export default function Contexts() {
                 </button>
                 <button
                   onClick={handleFileUpload}
-                  disabled={!selectedFile || uploading}
+                  disabled={!selectedFile || !contextName.trim() || uploading}
                   className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded-lg transition-colors"
                 >
                   {uploading ? (

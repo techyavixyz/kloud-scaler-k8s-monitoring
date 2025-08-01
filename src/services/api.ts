@@ -134,10 +134,11 @@ export async function setUserContext(contextName: string, kubeconfigPath: string
   return response.json();
 }
 
-export async function uploadKubeconfig(file: File) {
+export async function uploadKubeconfig(file: File, contextName: string) {
   const token = localStorage.getItem('auth_token');
   const formData = new FormData();
   formData.append('kubeconfig', file);
+  formData.append('contextName', contextName);
 
   const response = await fetch(`${API_BASE}/contexts/upload`, {
     method: 'POST',

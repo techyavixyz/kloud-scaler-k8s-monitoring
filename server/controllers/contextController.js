@@ -1,7 +1,17 @@
-const { execShell } = require('../utils/kubectl');
+const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { pool } = require('./authController');
+
+function execShell(command) {
+  return new Promise((resolve, reject) => {
+    exec(command, { maxBuffer: 1024 * 5000 }, (error, stdout, stderr) => {
+      if (error) return reject(`❌ Error: ${error.message}`);
+      if (stderr && !stdout) return reject(`❌ stderr: ${stderr}`);
+      resolve(stdout.trim());
+    });
+  });
+}
 
 // Initialize user contexts table
 const initializeUserContextsTable = async () => {
@@ -27,6 +37,7 @@ const initializeUserContextsTable = async () => {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         filename VARCHAR(255) NOT NULL UNIQUE,
         original_name VARCHAR(255) NOT NULL,
+        context_name VARCHAR(255) NOT NULL,
         file_path VARCHAR(500) NOT NULL,
         uploaded_by UUID REFERENCES users(id),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -57,7 +68,7 @@ const getContexts = async (req, res) => {
           name: name.trim(),
           kubeconfigFile: file.filename,
           kubeconfigPath: file.file_path,
-          displayName: `${name.trim()} (${file.original_name})`
+          displayName: `${name.trim()} (${file.context_name || file.original_name})`
         }));
         allContexts.push(...contexts);
       } catch (error) {
@@ -124,8 +135,18 @@ const setUserContext = async (req, res) => {
 
 const uploadKubeconfig = async (req, res) => {
   try {
+    const { contextName } = req.body;
+    
     if (!req.file) {
       return res.status(400).json({ error: 'No kubeconfig file uploaded' });
+    }
+    
+    if (!contextName || contextName.trim() === '') {
+      // Remove uploaded file if context name is missing
+      if (req.file.path) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({ error: 'Context name is required' });
     }
 
     const { filename, originalname, path: filePath } = req.file;
@@ -142,14 +163,15 @@ const uploadKubeconfig = async (req, res) => {
 
     // Store file info in database
     await pool.query(
-      'INSERT INTO kubeconfig_files (filename, original_name, file_path, uploaded_by) VALUES ($1, $2, $3, $4)',
-      [filename, originalname, filePath, uploadedBy]
+      'INSERT INTO kubeconfig_files (filename, original_name, context_name, file_path, uploaded_by) VALUES ($1, $2, $3, $4, $5)',
+      [filename, originalname, contextName.trim(), filePath, uploadedBy]
     );
 
     res.json({ 
       message: 'Kubeconfig file uploaded successfully',
       filename,
-      originalName: originalname
+      originalName: originalname,
+      contextName: contextName.trim()
     });
   } catch (error) {
     console.error('Upload kubeconfig error:', error);

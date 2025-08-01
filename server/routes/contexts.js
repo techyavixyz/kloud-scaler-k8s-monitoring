@@ -26,7 +26,48 @@ const storage = multer.diskStorage({
 const upload = multer({ 
   storage,
   fileFilter: (req, file, cb) => {
-    // Accept any file type for kubeconfig
+    // Accept common kubeconfig file types
+    const allowedTypes = ['.yaml', '.yml', '.config', '.txt', ''];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedTypes.includes(ext) || !ext) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Please upload a valid kubeconfig file.'), false);
+    }
+  },
+  limits: {
+    fileSize: 2 * 1024 * 1024 // 2MB limit
+  }
+});
+
+// Error handling middleware for multer
+const handleMulterError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File too large. Maximum size is 2MB.' });
+    }
+    return res.status(400).json({ error: err.message });
+  }
+  if (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  next();
+};
+
+// Updated upload route with error handling
+router.post('/contexts/upload', 
+  authenticateToken, 
+  requireRole(['admin']), 
+  (req, res, next) => {
+    upload.single('kubeconfig')(req, res, (err) => {
+      handleMulterError(err, req, res, next);
+    });
+  },
+  uploadKubeconfig
+);
+
+// Remove the old upload route
+// router.post('/contexts/upload', authenticateToken, requireRole(['admin']), upload.single('kubeconfig'), uploadKubeconfig);
     cb(null, true);
   },
   limits: {

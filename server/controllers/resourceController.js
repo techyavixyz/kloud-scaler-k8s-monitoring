@@ -1,6 +1,15 @@
-const { execShell } = require('../utils/kubectl');
+const { exec } = require('child_process');
 const { pool } = require('./authController');
 
+function execShell(command) {
+  return new Promise((resolve, reject) => {
+    exec(command, { maxBuffer: 1024 * 5000 }, (error, stdout, stderr) => {
+      if (error) return reject(`❌ Error: ${error.message}`);
+      if (stderr && !stdout) return reject(`❌ stderr: ${stderr}`);
+      resolve(stdout.trim());
+    });
+  });
+}
 function parseCPU(value) {
   return value.endsWith('m') ? parseInt(value) / 1000 : parseFloat(value);
 }
