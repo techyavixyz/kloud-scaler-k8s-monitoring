@@ -52,10 +52,24 @@ export default function Contexts() {
       setSwitching(context.name);
       await setUserContext(context.name, context.kubeconfigPath);
       setUserContextState(context.name);
-      alert('Context switched successfully!');
+      // Show success message
+      const successDiv = document.createElement('div');
+      successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      successDiv.textContent = `Context switched to ${context.name}`;
+      document.body.appendChild(successDiv);
+      setTimeout(() => {
+        document.body.removeChild(successDiv);
+      }, 3000);
     } catch (error) {
       console.error('Failed to set user context:', error);
-      alert('Failed to switch context');
+      // Show error message
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      errorDiv.textContent = 'Failed to switch context';
+      document.body.appendChild(errorDiv);
+      setTimeout(() => {
+        document.body.removeChild(errorDiv);
+      }, 3000);
     } finally {
       setSwitching(null);
     }
@@ -70,14 +84,29 @@ export default function Contexts() {
     try {
       setUploading(true);
       await uploadKubeconfig(selectedFile, contextName.trim());
-      alert('Kubeconfig file uploaded successfully!');
+      // Show success message
+      const successDiv = document.createElement('div');
+      successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      successDiv.textContent = 'Kubeconfig file uploaded successfully!';
+      document.body.appendChild(successDiv);
+      setTimeout(() => {
+        document.body.removeChild(successDiv);
+      }, 3000);
+      
       setShowUpload(false);
       setSelectedFile(null);
       setContextName('');
       await loadContexts();
     } catch (error) {
       console.error('Failed to upload kubeconfig:', error);
-      alert('Failed to upload kubeconfig file');
+      // Show error message
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      errorDiv.textContent = 'Failed to upload kubeconfig file';
+      document.body.appendChild(errorDiv);
+      setTimeout(() => {
+        document.body.removeChild(errorDiv);
+      }, 3000);
     } finally {
       setUploading(false);
     }
@@ -337,7 +366,7 @@ export default function Contexts() {
               <div>
                 <h3 className="font-medium text-slate-900 dark:text-white">Personal Context</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  Each user has their own active context. Switching contexts only affects your personal view and operations.
+                  Each user has their own active context. Switching contexts only affects your personal view and operations. All uploaded kubeconfig files are available to all users.
                 </p>
               </div>
             </div>
@@ -349,7 +378,7 @@ export default function Contexts() {
               <div>
                 <h3 className="font-medium text-slate-900 dark:text-white">File Upload</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  Only administrators can upload kubeconfig files. Files are stored securely and made available to all users.
+                  Only administrators can upload kubeconfig files. Files are stored securely in ~/.kube/ directory and made available to all users.
                 </p>
               </div>
             </div>
@@ -375,7 +404,7 @@ export default function Contexts() {
               <div>
                 <h3 className="font-medium text-slate-900 dark:text-white">Security</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  All kubeconfig files are stored securely on the server. Your context selection is private and doesn't affect other users.
+                  All kubeconfig files are stored securely in ~/.kube/ directory with proper permissions (600). Your context selection is private and doesn't affect other users.
                 </p>
               </div>
             </div>

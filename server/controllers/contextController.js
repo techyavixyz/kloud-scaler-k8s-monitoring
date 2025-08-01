@@ -1,6 +1,7 @@
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { pool } = require('./authController');
 
 function execShell(command) {
@@ -53,6 +54,16 @@ const initializeUserContextsTable = async () => {
 // Initialize on startup
 initializeUserContextsTable();
 
+// Ensure ~/.kube directory exists
+const ensureKubeDirectory = () => {
+  const kubeDir = path.join(os.homedir(), '.kube');
+  if (!fs.existsSync(kubeDir)) {
+    fs.mkdirSync(kubeDir, { recursive: true });
+    console.log('✅ Created ~/.kube directory');
+  }
+  return kubeDir;
+};
+
 const getContexts = async (req, res) => {
   try {
     // Get all available kubeconfig files
@@ -68,7 +79,7 @@ const getContexts = async (req, res) => {
           name: name.trim(),
           kubeconfigFile: file.filename,
           kubeconfigPath: file.file_path,
-          displayName: `${name.trim()} (${file.context_name || file.original_name})`
+          displayName: `${name.trim()} (${file.context_name})`
         }));
         allContexts.push(...contexts);
       } catch (error) {
@@ -87,7 +98,7 @@ const getUserContext = async (req, res) => {
   try {
     const userId = req.user.id;
     const result = await pool.query(
-      'SELECT context_name, kubeconfig_path FROM user_contexts WHERE user_id = $1',
+      'SELECT context_name, kubeconfig_path FROM user_contexts WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1',
       [userId]
     );
     
@@ -118,12 +129,12 @@ const setUserContext = async (req, res) => {
       return res.status(400).json({ error: 'Invalid context or kubeconfig file' });
     }
 
-    // Upsert user context
+    // Delete existing user context and insert new one (only one active context per user)
+    await pool.query('DELETE FROM user_contexts WHERE user_id = $1', [userId]);
+    
     await pool.query(`
       INSERT INTO user_contexts (user_id, context_name, kubeconfig_path, updated_at)
       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
-      ON CONFLICT (user_id, context_name)
-      DO UPDATE SET kubeconfig_path = $3, updated_at = CURRENT_TIMESTAMP
     `, [userId, contextName, kubeconfigPath]);
 
     res.json({ message: `Context set to ${contextName}` });
@@ -149,29 +160,47 @@ const uploadKubeconfig = async (req, res) => {
       return res.status(400).json({ error: 'Context name is required' });
     }
 
-    const { filename, originalname, path: filePath } = req.file;
+    const { originalname, path: tempFilePath } = req.file;
     const uploadedBy = req.user.id;
 
     // Verify it's a valid kubeconfig file
     try {
-      await execShell(`kubectl --kubeconfig="${filePath}" config get-contexts`);
+      await execShell(`kubectl --kubeconfig="${tempFilePath}" config get-contexts`);
     } catch (error) {
       // Remove invalid file
-      fs.unlinkSync(filePath);
+      fs.unlinkSync(tempFilePath);
       return res.status(400).json({ error: 'Invalid kubeconfig file' });
     }
+
+    // Ensure ~/.kube directory exists
+    const kubeDir = ensureKubeDirectory();
+    
+    // Create a safe filename for the kubeconfig
+    const safeContextName = contextName.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+    const kubeconfigFilename = `config_${safeContextName}`;
+    const finalPath = path.join(kubeDir, kubeconfigFilename);
+
+    // Move file from temp location to ~/.kube directory
+    fs.copyFileSync(tempFilePath, finalPath);
+    fs.unlinkSync(tempFilePath); // Remove temp file
+
+    // Set proper permissions (readable by owner only)
+    fs.chmodSync(finalPath, 0o600);
 
     // Store file info in database
     await pool.query(
       'INSERT INTO kubeconfig_files (filename, original_name, context_name, file_path, uploaded_by) VALUES ($1, $2, $3, $4, $5)',
-      [filename, originalname, contextName.trim(), filePath, uploadedBy]
+      [kubeconfigFilename, originalname, contextName.trim(), finalPath, uploadedBy]
     );
+
+    console.log(`✅ Kubeconfig saved to: ${finalPath}`);
 
     res.json({ 
       message: 'Kubeconfig file uploaded successfully',
-      filename,
+      filename: kubeconfigFilename,
       originalName: originalname,
-      contextName: contextName.trim()
+      contextName: contextName.trim(),
+      path: finalPath
     });
   } catch (error) {
     console.error('Upload kubeconfig error:', error);
@@ -181,6 +210,7 @@ const uploadKubeconfig = async (req, res) => {
     res.status(500).json({ error: 'Failed to upload kubeconfig file' });
   }
 };
+
 const setContext = async (req, res) => {
   let { context } = req.body;
   context = encodeURI(context)

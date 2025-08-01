@@ -4,7 +4,7 @@ const { pool } = require('../controllers/authController');
 async function getUserKubeconfigPath(userId) {
   try {
     const result = await pool.query(
-      'SELECT kubeconfig_path FROM user_contexts WHERE user_id = $1 LIMIT 1',
+      'SELECT kubeconfig_path FROM user_contexts WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1',
       [userId]
     );
     return result.rows[0]?.kubeconfig_path || null;
