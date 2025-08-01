@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { GitBranch, CheckCircle, Clock, RefreshCw, Settings, Upload, FileText, Users } from 'lucide-react';
-import { fetchContexts, setContext, uploadKubeconfig, getUserContext, setUserContext } from '../services/api';
+import { GitBranch, CheckCircle, Clock, RefreshCw, Settings, Upload, FileText, Users, Trash2, Eye, X } from 'lucide-react';
+import { fetchContexts, uploadKubeconfig, getUserContext, setUserContext } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Context {
@@ -8,14 +8,27 @@ interface Context {
   kubeconfigFile: string;
   kubeconfigPath: string;
   displayName: string;
+  fileId: string;
+}
+
+interface KubeconfigFile {
+  id: string;
+  filename: string;
+  original_name: string;
+  context_name: string;
+  file_path: string;
+  uploaded_by_username: string;
+  created_at: string;
 }
 
 export default function Contexts() {
   const [contexts, setContexts] = useState<Context[]>([]);
+  const [kubeconfigFiles, setKubeconfigFiles] = useState<KubeconfigFile[]>([]);
   const [userContext, setUserContextState] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [switching, setSwitching] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [showManagement, setShowManagement] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [contextName, setContextName] = useState('');
@@ -24,6 +37,9 @@ export default function Contexts() {
   useEffect(() => {
     loadContexts();
     loadUserContext();
+    if (hasRole('admin')) {
+      loadKubeconfigFiles();
+    }
   }, []);
 
   const loadContexts = async () => {
@@ -35,6 +51,21 @@ export default function Contexts() {
       console.error('Failed to load contexts:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadKubeconfigFiles = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('http://localhost:3001/api/contexts/files', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      setKubeconfigFiles(data.files || []);
+    } catch (error) {
+      console.error('Failed to load kubeconfig files:', error);
     }
   };
 
@@ -105,6 +136,7 @@ export default function Contexts() {
       setSelectedFile(null);
       setContextName('');
       await loadContexts();
+      await loadKubeconfigFiles();
     } catch (error) {
       console.error('Failed to upload kubeconfig:', error);
       // Show error message
@@ -122,6 +154,49 @@ export default function Contexts() {
     }
   };
 
+  const handleDeleteFile = async (fileId: string) => {
+    if (!confirm('Are you sure you want to delete this kubeconfig file? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`http://localhost:3001/api/contexts/files/${fileId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        successDiv.textContent = 'Kubeconfig file deleted successfully!';
+        document.body.appendChild(successDiv);
+        setTimeout(() => {
+          if (document.body.contains(successDiv)) {
+            document.body.removeChild(successDiv);
+          }
+        }, 3000);
+        
+        await loadContexts();
+        await loadKubeconfigFiles();
+      } else {
+        throw new Error('Failed to delete file');
+      }
+    } catch (error) {
+      console.error('Failed to delete kubeconfig file:', error);
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      errorDiv.textContent = 'Failed to delete kubeconfig file';
+      document.body.appendChild(errorDiv);
+      setTimeout(() => {
+        if (document.body.contains(errorDiv)) {
+          document.body.removeChild(errorDiv);
+        }
+      }, 3000);
+    }
+  };
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -138,6 +213,13 @@ export default function Contexts() {
         <div className="flex items-center space-x-3 mt-4 md:mt-0">
           {hasRole('admin') && (
             <button
+              <button
+                onClick={() => setShowManagement(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Manage Files</span>
+              </button>
               onClick={() => setShowUpload(true)}
               className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
             >
@@ -176,6 +258,87 @@ export default function Contexts() {
         </div>
       )}
 
+      {/* File Management Modal */}
+      {showManagement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
+                <Eye className="w-5 h-5" />
+                <span>Manage Kubeconfig Files</span>
+              </h2>
+              <button
+                onClick={() => setShowManagement(false)}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                    <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">
+                      Context Name
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">
+                      Original File
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">
+                      Uploaded By
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">
+                      Created
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {kubeconfigFiles.map((file) => (
+                    <tr key={file.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <td className="py-4 px-4 font-medium text-slate-900 dark:text-white">
+                        {file.context_name}
+                      </td>
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-400">
+                        {file.original_name}
+                      </td>
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-400">
+                        {file.uploaded_by_username || 'Unknown'}
+                      </td>
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-400">
+                        {new Date(file.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="py-4 px-4">
+                        <button
+                          onClick={() => handleDeleteFile(file.id)}
+                          className="p-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {kubeconfigFiles.length === 0 && (
+              <div className="text-center py-8">
+                <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+                  No Kubeconfig Files
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400">
+                  Upload kubeconfig files to get started.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {/* Upload Modal */}
       {showUpload && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -189,7 +352,7 @@ export default function Contexts() {
                 onClick={() => setShowUpload(false)}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 

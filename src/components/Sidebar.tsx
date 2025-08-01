@@ -15,15 +15,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'viewer'] },
-    { name: 'Resource Usage', href: '/resources', icon: Activity, roles: ['admin', 'viewer'] },
-    { name: 'Pod Logs', href: '/logs', icon: FileText, roles: ['admin', 'viewer'] },
-    { name: 'Pod Errors', href: '/pod-errors', icon: AlertTriangle, roles: ['admin', 'viewer'] },
-    { name: 'Node Status', href: '/node-status', icon: Server, roles: ['admin', 'viewer'] },
-    { name: 'Pod Status', href: '/pod-status', icon: BarChart3, roles: ['admin', 'viewer'] },
-    { name: 'Contexts', href: '/contexts', icon: GitBranch, roles: ['admin', 'viewer'] },
-    { name: 'Profile', href: '/profile', icon: User, roles: ['admin', 'viewer'] },
-    { name: 'Admin', href: '/admin', icon: Users, roles: ['admin'] },
-    { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin', 'viewer'] },
+    { name: 'Resource Usage', href: '/dashboard/resources', icon: Activity, roles: ['admin', 'viewer'] },
+    { name: 'Pod Logs', href: '/dashboard/logs', icon: FileText, roles: ['admin', 'viewer'] },
+    { name: 'Pod Errors', href: '/dashboard/pod-errors', icon: AlertTriangle, roles: ['admin', 'viewer'] },
+    { name: 'Node Status', href: '/dashboard/node-status', icon: Server, roles: ['admin', 'viewer'] },
+    { name: 'Pod Status', href: '/dashboard/pod-status', icon: BarChart3, roles: ['admin', 'viewer'] },
+    { name: 'Contexts', href: '/dashboard/contexts', icon: GitBranch, roles: ['admin', 'viewer'] },
+    { name: 'Profile', href: '/dashboard/profile', icon: User, roles: ['admin', 'viewer'] },
+    { name: 'Admin', href: '/dashboard/admin', icon: Users, roles: ['admin'] },
+    { name: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['admin', 'viewer'] },
   ];
 
   const filteredNavigation = navigation.filter(item => 

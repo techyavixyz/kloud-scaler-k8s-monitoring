@@ -160,7 +160,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                     <button
                       onClick={() => {
                         setShowContextDropdown(false);
-                        navigate('/contexts');
+                        navigate('/dashboard/contexts');
                       }}
                       className="w-full text-left px-2 py-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                     >
@@ -219,7 +219,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
               
               <div className="py-1">
                 <button
-                  onClick={() => navigate('/profile')}
+                  onClick={() => navigate('/dashboard/profile')}
                   className="flex items-center space-x-2 w-full px-3 py-2 text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
                   <User className="w-4 h-4" />

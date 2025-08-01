@@ -43,7 +43,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const os = require('os');
-const { getContexts, uploadKubeconfig, getUserContext, setUserContext } = require('../controllers/contextController');
+const { getContexts, uploadKubeconfig, getUserContext, setUserContext, deleteKubeconfig, getKubeconfigFiles } = require('../controllers/contextController');
 const { authenticateToken } = require('../middleware/auth');
 const { requireRole } = require('../middleware/auth');
 const router = express.Router();
@@ -72,6 +72,8 @@ const upload = multer({
 // Routes
 router.get('/contexts', authenticateToken, getContexts);
 router.post('/contexts/upload', authenticateToken, requireRole(['admin']), upload.single('kubeconfig'), uploadKubeconfig);
+router.get('/contexts/files', authenticateToken, requireRole(['admin']), getKubeconfigFiles);
+router.delete('/contexts/files/:fileId', authenticateToken, requireRole(['admin']), deleteKubeconfig);
 router.get('/user-context', authenticateToken, getUserContext);
 router.post('/user-context', authenticateToken, setUserContext);
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
@@ -28,8 +29,9 @@ function App() {
       <WebSocketProvider>
         <Router>
             <Routes>
+              <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/*" element={
+              <Route path="/dashboard/*" element={
                 <ProtectedRoute>
                   <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
                     <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -40,7 +42,6 @@ function App() {
                       <main className="p-4 lg:p-6">
                         <Routes>
                           <Route path="/" element={<Dashboard />} />
-                          <Route path="/dashboard" element={<Dashboard />} />
                           <Route path="/resources" element={<ResourceUsage />} />
                           <Route path="/logs" element={<PodLogs />} />
                           <Route path="/pod-errors" element={<PodErrors />} />

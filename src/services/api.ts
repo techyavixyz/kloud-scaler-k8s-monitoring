@@ -174,20 +174,3 @@ export async function uploadKubeconfig(file: File, contextName: string) {
   }
   return response.json();
 }
-
-export async function setContext(context: string) {
-  const token = localStorage.getItem('auth_token');
-  const response = await fetch(`${API_BASE}/contexts/set`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify({ context }),
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to set context');
-  }
-  return response.json();
-}

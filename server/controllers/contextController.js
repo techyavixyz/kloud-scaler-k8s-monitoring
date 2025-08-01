@@ -287,9 +287,7 @@ function execShell(command) {
 
 const initializeUserContextsTable = async () => {
   try {
-    await pool.query('DROP TABLE IF EXISTS user_contexts CASCADE');
-    await pool.query('DROP TABLE IF EXISTS kubeconfig_files CASCADE');
-
+    // Don't drop tables, just create if not exists
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_contexts (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -302,6 +300,7 @@ const initializeUserContextsTable = async () => {
       )
     `);
 
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS kubeconfig_files (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -310,6 +309,7 @@ const initializeUserContextsTable = async () => {
         context_name VARCHAR(255) NOT NULL,
         file_path VARCHAR(500) NOT NULL,
         uploaded_by UUID REFERENCES users(id),
+        is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -333,7 +333,7 @@ const ensureKubeDirectory = () => {
 
 const getContexts = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM kubeconfig_files ORDER BY created_at DESC');
+    const result = await pool.query('SELECT * FROM kubeconfig_files WHERE is_active = true ORDER BY created_at DESC');
     const kubeconfigFiles = result.rows;
 
     const allContexts = [];
@@ -346,7 +346,8 @@ const getContexts = async (req, res) => {
           kubeconfigFile: file.filename,
           kubeconfigPath: file.file_path,
           displayName: `${name.trim()} (${file.context_name})`,
-          contextDescription: file.context_name
+          contextDescription: file.context_name,
+          fileId: file.id
         }));
         allContexts.push(...contexts);
       } catch (error) {
@@ -486,9 +487,77 @@ const uploadKubeconfig = async (req, res) => {
   }
 };
 
+const deleteKubeconfig = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const userId = req.user.id;
+    
+    // Check if user has admin role
+    const userResult = await pool.query('SELECT roles FROM users WHERE id = $1', [userId]);
+    const userRoles = userResult.rows[0]?.roles || [];
+    
+    if (!userRoles.includes('admin')) {
+      return res.status(403).json({ error: 'Only administrators can delete kubeconfig files' });
+    }
+    
+    // Get file info before deletion
+    const fileResult = await pool.query('SELECT * FROM kubeconfig_files WHERE id = $1', [fileId]);
+    const file = fileResult.rows[0];
+    
+    if (!file) {
+      return res.status(404).json({ error: 'Kubeconfig file not found' });
+    }
+    
+    // Mark as inactive instead of deleting (soft delete)
+    await pool.query('UPDATE kubeconfig_files SET is_active = false WHERE id = $1', [fileId]);
+    
+    // Remove physical file
+    if (fs.existsSync(file.file_path)) {
+      fs.unlinkSync(file.file_path);
+    }
+    
+    // Remove any user contexts using this file
+    await pool.query('DELETE FROM user_contexts WHERE kubeconfig_path = $1', [file.file_path]);
+    
+    res.json({ message: 'Kubeconfig file deleted successfully' });
+  } catch (error) {
+    console.error('Delete kubeconfig error:', error);
+    res.status(500).json({ error: 'Failed to delete kubeconfig file' });
+  }
+};
+
+const getKubeconfigFiles = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Check if user has admin role
+    const userResult = await pool.query('SELECT roles FROM users WHERE id = $1', [userId]);
+    const userRoles = userResult.rows[0]?.roles || [];
+    
+    if (!userRoles.includes('admin')) {
+      return res.status(403).json({ error: 'Only administrators can view kubeconfig files' });
+    }
+    
+    const result = await pool.query(`
+      SELECT kf.*, u.username as uploaded_by_username 
+      FROM kubeconfig_files kf 
+      LEFT JOIN users u ON kf.uploaded_by = u.id 
+      WHERE kf.is_active = true 
+      ORDER BY kf.created_at DESC
+    `);
+    
+    res.json({ files: result.rows });
+  } catch (error) {
+    console.error('Get kubeconfig files error:', error);
+    res.status(500).json({ error: 'Failed to get kubeconfig files' });
+  }
+};
+
 module.exports = {
   getContexts,
   uploadKubeconfig,
   getUserContext,
-  setUserContext
+  setUserContext,
+  deleteKubeconfig,
+  getKubeconfigFiles
 };
