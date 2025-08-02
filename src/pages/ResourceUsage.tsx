@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, TrendingUp, BarChart3, RefreshCw } from 'lucide-react';
-import { fetchResourceUsage, fetchMetricsHistory } from '../services/api';
+import { fetchResourceUsage, fetchMetricsHistory, fetchLiveResourceUsage } from '../services/api';
 import MetricsCard from '../components/MetricsCard';
 import HistoricalChart from '../components/HistoricalChart';
 
@@ -36,7 +36,8 @@ export default function ResourceUsage() {
 
   const loadMetrics = async () => {
     try {
-      const data = await fetchResourceUsage();
+      // Use live data for manual refresh, historical for auto-refresh
+      const data = autoRefresh ? await fetchResourceUsage() : await fetchLiveResourceUsage();
       setMetrics(data);
       if (!selectedNamespace && data.length > 0) {
         setSelectedNamespace(data[0].namespace);

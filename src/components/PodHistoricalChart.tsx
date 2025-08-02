@@ -15,6 +15,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 interface PodHistoricalChartProps {
   namespace: string;
+  podName?: string;
   timeRange: number; // hours
 }
 
@@ -27,38 +28,60 @@ interface PodHistoricalMetric {
   timestamp: string;
 }
 
-export default function PodHistoricalChart({ namespace, timeRange }: PodHistoricalChartProps) {
+export default function PodHistoricalChart({ namespace, podName, timeRange }: PodHistoricalChartProps) {
   const [data, setData] = useState<PodHistoricalMetric[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadHistoricalData();
-  }, [namespace, timeRange]);
+  }, [namespace, podName, timeRange]);
 
   const loadHistoricalData = async () => {
     try {
       setLoading(true);
-      // Mock data for now - in production, this would query the database
-      const mockData = [];
-      const now = new Date();
       
-      for (let i = parseInt(timeRange.toString()); i >= 0; i--) {
-        const timestamp = new Date(now.getTime() - (i * 60 * 60 * 1000));
-        const podCount = Math.floor(Math.random() * 10) + 3; // 3-12 pods
-        const totalCpu = Math.random() * 2000 + 500; // 500-2500m
-        const totalMemory = Math.random() * 4000 + 1000; // 1-5 GB
-        
-        mockData.push({
-          total_cpu: totalCpu,
-          total_memory: totalMemory,
-          pod_count: podCount,
-          avg_cpu_per_pod: totalCpu / podCount,
-          avg_memory_per_pod: totalMemory / podCount,
-          timestamp: timestamp.toISOString()
+      if (podName) {
+        // Fetch specific pod historical data
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`http://localhost:3001/api/pod-metrics/history?podName=${podName}&namespace=${namespace}&hours=${timeRange}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
         });
+        const podData = await response.json();
+        
+        const formattedData = podData.map((item: any) => ({
+          total_cpu: item.cpuRaw,
+          total_memory: item.memoryRaw,
+          pod_count: 1,
+          avg_cpu_per_pod: item.cpuRaw,
+          avg_memory_per_pod: item.memoryRaw,
+          timestamp: item.timestamp
+        }));
+        
+        setData(formattedData);
+      } else {
+        // Mock data for namespace-level metrics
+        const mockData = [];
+        const now = new Date();
+        
+        for (let i = parseInt(timeRange.toString()); i >= 0; i--) {
+          const timestamp = new Date(now.getTime() - (i * 60 * 60 * 1000));
+          const podCount = Math.floor(Math.random() * 10) + 3; // 3-12 pods
+          const totalCpu = Math.random() * 2000 + 500; // 500-2500m
+          const totalMemory = Math.random() * 4000 + 1000; // 1-5 GB
+          
+          mockData.push({
+            total_cpu: totalCpu,
+            total_memory: totalMemory,
+            pod_count: podCount,
+            avg_cpu_per_pod: totalCpu / podCount,
+            avg_memory_per_pod: totalMemory / podCount,
+            timestamp: timestamp.toISOString()
+          });
+        }
+        setData(mockData);
       }
-      
-      setData(mockData);
     } catch (error) {
       console.error('Failed to load pod historical data:', error);
       setData([]);
@@ -214,7 +237,7 @@ export default function PodHistoricalChart({ namespace, timeRange }: PodHistoric
     return (
       <div className="h-64 flex items-center justify-center">
         <p className="text-slate-500 dark:text-slate-400">
-          No historical data available for {namespace}
+          No historical data available for {podName ? `${podName} in ${namespace}` : namespace}
         </p>
       </div>
     );

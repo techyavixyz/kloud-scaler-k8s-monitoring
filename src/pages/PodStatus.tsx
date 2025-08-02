@@ -31,6 +31,8 @@ interface NamespaceMetric {
 export default function PodStatus() {
   const [namespaceMetrics, setNamespaceMetrics] = useState<NamespaceMetric[]>([]);
   const [selectedNamespace, setSelectedNamespace] = useState<string>('');
+  const [selectedPod, setSelectedPod] = useState<string>('');
+  const [availablePods, setAvailablePods] = useState<string[]>([]);
   const [timeRange, setTimeRange] = useState<string>('24');
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -41,6 +43,12 @@ export default function PodStatus() {
     
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (selectedNamespace) {
+      loadPodsForNamespace();
+    }
+  }, [selectedNamespace]);
 
   const checkPodStatus = async () => {
     setLoading(true);
@@ -67,6 +75,25 @@ export default function PodStatus() {
     }
   };
 
+  const loadPodsForNamespace = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`http://localhost:3001/api/pods?namespace=${selectedNamespace}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      const podNames = data.pods.map((pod: any) => pod.name);
+      setAvailablePods(podNames);
+      if (podNames.length > 0 && !selectedPod) {
+        setSelectedPod(podNames[0]);
+      }
+    } catch (error) {
+      console.error('Failed to load pods for namespace:', error);
+      setAvailablePods([]);
+    }
+  };
   const totalPods = namespaceMetrics.reduce((sum, ns) => sum + ns.podCount, 0);
   const totalCpu = namespaceMetrics.reduce((sum, ns) => sum + ns.totalCpu, 0);
   const totalMemory = namespaceMetrics.reduce((sum, ns) => sum + ns.totalMemory, 0);
@@ -160,12 +187,17 @@ export default function PodStatus() {
       {selectedNamespace && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-purple-500" />
-              <span>Historical Pod Usage - {selectedNamespace}</span>
-            </h2>
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5 text-purple-500" />
+                <span>Historical Pod Usage</span>
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                {selectedPod ? `Pod: ${selectedPod} in ${selectedNamespace}` : `Namespace: ${selectedNamespace}`}
+              </p>
+            </div>
             
-            <div className="flex items-center space-x-3 mt-4 md:mt-0">
+            <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-3 mt-4 md:mt-0">
               <select
                 value={selectedNamespace}
                 onChange={(e) => setSelectedNamespace(e.target.value)}
@@ -175,6 +207,17 @@ export default function PodStatus() {
                   <option key={ns.namespace} value={ns.namespace}>
                     {ns.namespace}
                   </option>
+                ))}
+              </select>
+
+              <select
+                value={selectedPod}
+                onChange={(e) => setSelectedPod(e.target.value)}
+                className="text-white px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">All Pods in Namespace</option>
+                {availablePods.map(pod => (
+                  <option key={pod} value={pod}>{pod}</option>
                 ))}
               </select>
 
@@ -193,6 +236,7 @@ export default function PodStatus() {
 
           <PodHistoricalChart 
             namespace={selectedNamespace} 
+            podName={selectedPod}
             timeRange={parseInt(timeRange)} 
           />
         </div>

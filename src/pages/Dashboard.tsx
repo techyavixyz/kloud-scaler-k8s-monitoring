@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Activity, Server, Database, Clock, TrendingUp, AlertTriangle } from 'lucide-react';
 import MetricsCard from '../components/MetricsCard';
 import ChartCard from '../components/ChartCard';
-import { fetchResourceUsage, fetchNamespaces } from '../services/api';
+import { fetchResourceUsage, fetchNamespaces, fetchLiveResourceUsage } from '../services/api';
 
 interface ResourceMetric {
   namespace: string;

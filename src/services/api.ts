@@ -37,13 +37,26 @@ export interface LogsRequest {
 // Resource Usage API
 export async function fetchResourceUsage(): Promise<ResourceUsage[]> {
   const token = localStorage.getItem('auth_token');
-  const response = await fetch(`${API_BASE}/resource-usage`, {
+  const response = await fetch(`${API_BASE}/resource-usage?live=false`, {
     headers: {
       'Authorization': `Bearer ${token}`,
     },
   });
   if (!response.ok) {
     throw new Error('Failed to fetch resource usage');
+  }
+  return response.json();
+}
+
+export async function fetchLiveResourceUsage(): Promise<ResourceUsage[]> {
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch(`${API_BASE}/resource-usage?live=true`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch live resource usage');
   }
   return response.json();
 }
