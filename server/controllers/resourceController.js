@@ -1,4 +1,5 @@
 const { execKubectl } = require('../utils/kubectl');
+const { storeResourceMetrics, getHistoricalResourceMetrics } = require('./metricsController');
 
 function parseCPU(value) {
   return value.endsWith('m') ? parseInt(value) / 1000 : parseFloat(value);
@@ -21,6 +22,12 @@ function formatMemory(valueMi) {
 
 const getResourceUsage = async (req, res) => {
   const userId = req.user?.id;
+  const { live } = req.query;
+
+  // If not requesting live data, return historical data (15 seconds delayed)
+  if (!live) {
+    return getHistoricalResourceMetrics(req, res);
+  }
 
   try {
     console.log(`📊 Getting resource usage for user: ${userId}`);
@@ -58,6 +65,10 @@ const getResourceUsage = async (req, res) => {
     }));
 
     console.log(`📊 Resource usage result for user ${userId}:`, result.length, 'namespaces');
+    
+    // Store metrics in database for historical data
+    await storeResourceMetrics(result);
+    
     res.json(result);
   } catch (err) {
     console.error('Resource usage error:', err);

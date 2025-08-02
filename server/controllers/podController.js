@@ -1,4 +1,5 @@
 const { execKubectl } = require('../utils/kubectl');
+const { storePodMetrics, getHistoricalPodMetrics15SecDelay } = require('./metricsController');
 
 const getPods = async (req, res) => {
   const { namespace } = req.query;
@@ -150,6 +151,12 @@ const getPodDetails = async (req, res) => {
 
 const getAllPodMetrics = async (req, res) => {
   const userId = req.user?.id;
+  const { live } = req.query;
+
+  // If not requesting live data, return historical data (15 seconds delayed)
+  if (!live) {
+    return getHistoricalPodMetrics15SecDelay(req, res);
+  }
   
   try {
     // Get all namespaces
@@ -203,6 +210,9 @@ const getAllPodMetrics = async (req, res) => {
     }
 
     res.json({ namespaceMetrics });
+    
+    // Store metrics in database for historical data
+    await storePodMetrics(namespaceMetrics);
   } catch (err) {
     console.error('All pod metrics error:', err);
     res.status(500).json({ error: err.toString() });

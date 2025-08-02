@@ -1,4 +1,5 @@
 const { execKubectl } = require('../utils/kubectl');
+const { storeNodeMetrics, getHistoricalNodeMetrics } = require('./metricsController');
 
 const getNodes = async (req, res) => {
   const userId = req.user?.id;
@@ -33,6 +34,12 @@ const getNodes = async (req, res) => {
 
 const getNodeMetrics = async (req, res) => {
   const userId = req.user?.id;
+  const { live } = req.query;
+
+  // If not requesting live data, return historical data (15 seconds delayed)
+  if (!live) {
+    return getHistoricalNodeMetrics(req, res);
+  }
   
   try {
     console.log(`📊 Getting node metrics for user: ${userId}`);
@@ -55,6 +62,10 @@ const getNodeMetrics = async (req, res) => {
     }
     
     console.log(`📊 Node metrics result for user ${userId}:`, nodeMetrics.length, 'nodes');
+    
+    // Store metrics in database for historical data
+    await storeNodeMetrics(nodeMetrics);
+    
     res.json({ nodeMetrics });
   } catch (err) {
     console.error('Node metrics error:', err);
